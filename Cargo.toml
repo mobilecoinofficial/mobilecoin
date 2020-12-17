@@ -148,3 +148,8 @@ cpuid-bool = { git = "https://github.com/eranrund/RustCrypto-utils", rev = "74f8
 # We need to patch aes-gcm so we can make some fields/functions/structs pub in order to have a constant time decrypt
 aes-gcm = { git = "https://github.com/xoloki/AEADs", rev = "d1a8517d3dd867ed9c5794002add67992a42f6aa" }
 
+# Patched because packed_simd is no longer being updated on crates.io. Even though 0.3.4 exists as the crate
+# packed_simd_2, we can't override our dependencies' dependency on packed_simd, so we must patch it to point to the git
+# repo instead.
+# 0.3.4 fixes https://github.com/rust-lang/packed_simd/issues/288
+packed_simd = { version = "0.3.4", git = "https://github.com/rust-lang/packed_simd.git", rev = "32303805c1c363c2dff6a752c66da173f71d3056" }
