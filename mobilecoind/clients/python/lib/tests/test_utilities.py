@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import mobilecoin
 
+
 class TestDisplayAsMOB(TestCase):
     def test_display_as_MOB(self):
         nMOB = 1e3
@@ -25,18 +26,18 @@ class TestDisplayAsMOB(TestCase):
             (0.123 * nMOB, "0.123 nMOB"),
             (0.500 * nMOB, "0.500 nMOB"),
             (0.999 * nMOB, "0.999 nMOB"),
-            (0.9991  * nMOB, "0.999 nMOB"),
-            (0.9995  * nMOB, "0.001 μMOB"),
+            (0.9991 * nMOB, "0.999 nMOB"),
+            (0.9995 * nMOB, "0.001 μMOB"),
             # micro
             (0.001 * μMOB, "0.001 μMOB"),
             (0.012 * μMOB, "0.012 μMOB"),
             (0.123 * μMOB, "0.123 μMOB"),
             (0.5 * μMOB, "0.500 μMOB"),
             (0.999 * μMOB, "0.999 μMOB"),
-            (0.9991  * μMOB, "0.999 μMOB"),
-            (0.9995  * μMOB, "0.000001 MOB"),
-            (1  * μMOB, "0.000001 MOB"),
-            (12  * μMOB, "0.000012 MOB"),
+            (0.9991 * μMOB, "0.999 μMOB"),
+            (0.9995 * μMOB, "0.000001 MOB"),
+            (1 * μMOB, "0.000001 MOB"),
+            (12 * μMOB, "0.000012 MOB"),
             (123 * μMOB, "0.000123 MOB"),
             (500 * μMOB, "0.000500 MOB"),
             # base precision 6
@@ -47,12 +48,12 @@ class TestDisplayAsMOB(TestCase):
             # base precision 3
             (0.0009999 * MOB, "0.001 MOB"),
             (0.0015 * MOB, "0.002 MOB"),
-            (0.0030005 * MOB , "0.003 MOB"),
+            (0.0030005 * MOB, "0.003 MOB"),
             (0.999 * MOB, "0.999 MOB"),
-            (0.9991  * MOB, "0.999 MOB"),
-            (0.9995  * MOB, "1.000 MOB"),
-            (1  * MOB, "1.000 MOB"),
-            (12  * MOB, "12.000 MOB"),
+            (0.9991 * MOB, "0.999 MOB"),
+            (0.9995 * MOB, "1.000 MOB"),
+            (1 * MOB, "1.000 MOB"),
+            (12 * MOB, "12.000 MOB"),
             (123 * MOB, "123.000 MOB"),
             (0.012 * MOB, "0.012 MOB"),
             (0.1 * MOB, "0.100 MOB"),
@@ -67,21 +68,21 @@ class TestDisplayAsMOB(TestCase):
             # kilo
             (9.9999994 * kMOB, "9999.999 MOB"),
             (9.9999995 * kMOB, "10.00 kMOB"),
-            (12  * kMOB, "12.00 kMOB"),
+            (12 * kMOB, "12.00 kMOB"),
             (123.02 * kMOB, "123.02 kMOB"),
             (500 * kMOB, "500.00 kMOB"),
             (9999.05 * kMOB, "9999.05 kMOB"),
             (9999.994 * kMOB, "9999.99 kMOB"),
             (9999.995 * kMOB, "10.00 MMOB"),
-            #mega
+            # mega
             (9.999994 * MMOB, "9999.99 kMOB"),
             (9.999995 * MMOB, "10.00 MMOB"),
-            (10  * MMOB, "10.00 MMOB"),
+            (10 * MMOB, "10.00 MMOB"),
             (123.02 * MMOB, "123.02 MMOB"),
             (200.01 * MMOB, "200.01 MMOB"),
             (250 * MMOB, "250.00 MMOB"),
             (250.000_000_000_001 * MMOB, "overflow"),
-            ]
+        ]
 
         for (picoMOB, expected_str) in test_pairs:
             str = mobilecoin.display_as_MOB(picoMOB)

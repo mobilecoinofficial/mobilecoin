@@ -23,27 +23,24 @@ from google.protobuf.empty_pb2 import Empty
 
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mobilecoind-host",
-                        default="localhost",
-                        type=str,
-                        help="Mobilecoind host")
-    parser.add_argument("--mobilecoind-port",
-                        default="4444",
-                        type=str,
-                        help="Mobilecoind port")
-    parser.add_argument("--key-dir",
-                        type=str,
-                        help="Path to directory of account_keys")
-    parser.add_argument("--max-seconds",
-                        type=int,
-                        default=40,
-                        help="Number of seconds to wait for a tx to clearn")
+    parser.add_argument(
+        "--mobilecoind-host", default="localhost", type=str, help="Mobilecoind host"
+    )
+    parser.add_argument(
+        "--mobilecoind-port", default="4444", type=str, help="Mobilecoind port"
+    )
+    parser.add_argument("--key-dir", type=str, help="Path to directory of account_keys")
+    parser.add_argument(
+        "--max-seconds",
+        type=int,
+        default=40,
+        help="Number of seconds to wait for a tx to clearn",
+    )
     return parser.parse_args()
 
 
 def run_test(stub, amount, monitor_id, dest, max_seconds):
-    resp = stub.GetBalance(
-        mobilecoind_api_pb2.GetBalanceRequest(monitor_id=monitor_id))
+    resp = stub.GetBalance(mobilecoind_api_pb2.GetBalanceRequest(monitor_id=monitor_id))
     starting_balance = resp.balance
     print("Starting balance prior to transfer:", starting_balance)
     tx_stats = {}
@@ -62,32 +59,32 @@ def run_test(stub, amount, monitor_id, dest, max_seconds):
             ],
             fee=0,
             tombstone=0,
-        ))
+        )
+    )
 
     tx_stats[0] = {
-        'start': time.time(),
-        'time_delta': None,
-        'tombstone': tx_resp.sender_tx_receipt.tombstone,
-        'block_delta': None,
-        'status': TransferStatus.pending,
-        'receipt': tx_resp,
+        "start": time.time(),
+        "time_delta": None,
+        "tombstone": tx_resp.sender_tx_receipt.tombstone,
+        "block_delta": None,
+        "status": TransferStatus.pending,
+        "receipt": tx_resp,
     }
     stats = poll(monitor_id, tx_stats, stub)
     # FIXME: Move max seconds check inside polling
-    assert tx_stats[0]['time_delta'] < max_seconds, "Did not clear in time"
-    assert tx_stats[0]['status'] == TransferStatus.success, "Transfer did not succeed"
+    assert tx_stats[0]["time_delta"] < max_seconds, "Did not clear in time"
+    assert tx_stats[0]["status"] == TransferStatus.success, "Transfer did not succeed"
     return stats
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
     print(args)
 
     stub = connect(args.mobilecoind_host, args.mobilecoind_port)
     accounts = [
         load_key_and_register("{}/{}".format(args.key_dir, k), stub)
-        for k in sorted(
-            filter(lambda x: x.endswith(".json"), os.listdir(args.key_dir)))
+        for k in sorted(filter(lambda x: x.endswith(".json"), os.listdir(args.key_dir)))
     ]
 
     monitor_ids = [a.monitor_id for a in accounts]
@@ -96,7 +93,8 @@ if __name__ == '__main__':
         wait_for_accounts_sync(stub, monitor_ids, 3)
         # Get starting balance
         resp = stub.GetBalance(
-            mobilecoind_api_pb2.GetBalanceRequest(monitor_id=account_data.monitor_id))
+            mobilecoind_api_pb2.GetBalanceRequest(monitor_id=account_data.monitor_id)
+        )
         balance = resp.balance
         print("Starting balance for account", i, ":", resp)
 

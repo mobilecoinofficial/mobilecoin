@@ -15,4 +15,7 @@ for toml in $(grep --exclude-dir cargo --exclude-dir rust-mbedtls --include=Carg
   cargo clippy --all --all-features
   echo "Linting in $PWD complete."
   popd >/dev/null
+  echo "Linting all python" 
+  PYTHON_FILES=$(find . -name '*.py'|grep -v cargo)
+  black --check mob ${PYTHON_FILES}
 done
