@@ -144,13 +144,15 @@ mod tests {
     use mc_account_keys::{AccountKey, RootIdentity};
     use mc_common::logger::test_with_logger;
     use rand::{rngs::StdRng, SeedableRng};
+    use std::convert::TryFrom;
 
     #[test_with_logger]
     fn test_arbitrary_hint_text(logger: Logger) {
         let mut rng: StdRng = SeedableRng::from_seed([20u8; 32]);
         let mut fixed_rng: FixedRng = SeedableRng::from_seed([33u8; 32]);
 
-        let account_key = AccountKey::from(&RootIdentity::from_random(&mut rng));
+        let account_key = AccountKey::try_from(&RootIdentity::from_random(&mut rng))
+            .expect("Could not create AccountKey from random root identity");
 
         // Case with short hint text
         let hint_slice = "Vaccine 90% effective";

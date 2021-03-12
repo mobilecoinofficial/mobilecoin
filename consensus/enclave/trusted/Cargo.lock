@@ -572,6 +572,7 @@ version = "1.0.1-pre1"
 dependencies = [
  "blake2 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "curve25519-dalek 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "displaydoc 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "hkdf 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mc-crypto-digestible 1.0.1-pre1",
  "mc-crypto-hashes 1.0.1-pre1",

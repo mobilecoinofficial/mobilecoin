@@ -54,6 +54,12 @@ impl From<mc_crypto_keys::KeyError> for ConversionError {
     }
 }
 
+impl From<mc_account_keys::Error> for ConversionError {
+    fn from(_src: mc_account_keys::Error) -> Self {
+        Self::InvalidContents
+    }
+}
+
 impl Error for ConversionError {}
 
 impl fmt::Display for ConversionError {

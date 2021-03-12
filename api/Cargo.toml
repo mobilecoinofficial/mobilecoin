@@ -45,3 +45,4 @@ datatest = "0.6"
 pem = "0.8"
 prost = { version = "0.6.1", default-features = false }
 rand = "0.7"
+x509-signature = "0.5"

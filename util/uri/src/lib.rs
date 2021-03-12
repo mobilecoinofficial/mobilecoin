@@ -435,25 +435,25 @@ mod fog_uri_tests {
     #[test]
     fn test_tls_override() {
         assert_eq!(
-            FogUri::from_str("fog://node.com/")
+            FogUri::from_str("fog://fog.unittest.mobilecoin.com")
                 .unwrap()
                 .tls_hostname_override(),
             None
         );
         assert_eq!(
-            FogUri::from_str("fog://node.com/?")
+            FogUri::from_str("fog://fog.unittest.mobilecoin.com/?")
                 .unwrap()
                 .tls_hostname_override(),
             None
         );
         assert_eq!(
-            FogUri::from_str("fog://node.com/?tls-hostname=")
+            FogUri::from_str("fog://fog.unittest.mobilecoin.com/?tls-hostname=")
                 .unwrap()
                 .tls_hostname_override(),
             None
         );
         assert_eq!(
-            FogUri::from_str("fog://node.com/?tls-hostname=lol.com")
+            FogUri::from_str("fog://fog.unittest.mobilecoin.com/?tls-hostname=lol.com")
                 .unwrap()
                 .tls_hostname_override(),
             Some("lol.com".into())

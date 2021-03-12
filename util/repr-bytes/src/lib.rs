@@ -126,7 +126,9 @@ macro_rules! derive_repr_bytes_from_as_ref_and_try_from {
             type Size = $mysize;
             type Error = <$mytype as ::core::convert::TryFrom<&'static [u8]>>::Error;
 
-            fn from_bytes(src: &$crate::GenericArray<u8, Self::Size>) -> Result<Self, Self::Error> {
+            fn from_bytes(
+                src: &$crate::GenericArray<u8, Self::Size>,
+            ) -> ::core::result::Result<Self, Self::Error> {
                 Ok(<Self as ::core::convert::TryFrom<&[u8]>>::try_from(
                     src.as_slice(),
                 )?)
@@ -170,7 +172,7 @@ macro_rules! derive_try_from_slice_from_repr_bytes {
     ($mytype:ty) => {
         impl<'a> ::core::convert::TryFrom<&'a [u8]> for $mytype {
             type Error = <Self as $crate::ReprBytes>::Error;
-            fn try_from(src: &'a [u8]) -> Result<Self, Self::Error> {
+            fn try_from(src: &'a [u8]) -> ::core::result::Result<Self, Self::Error> {
                 if src.len() != <Self as $crate::ReprBytes>::size() {
                     return Err(Self::Error::from($crate::LengthMismatch {
                         expected: <Self as $crate::ReprBytes>::size(),
@@ -210,7 +212,7 @@ macro_rules! derive_prost_message_from_repr_bytes {
                 wire_type: $crate::_exports::prost::encoding::WireType,
                 buf: &mut B,
                 ctx: $crate::_exports::prost::encoding::DecodeContext,
-            ) -> Result<(), $crate::_exports::prost::DecodeError>
+            ) -> ::core::result::Result<(), $crate::_exports::prost::DecodeError>
             where
                 B: $crate::_exports::prost::bytes::Buf,
             {
@@ -273,7 +275,7 @@ macro_rules! derive_serde_from_repr_bytes {
             fn serialize<S: $crate::_exports::serde::ser::Serializer>(
                 &self,
                 serializer: S,
-            ) -> Result<S::Ok, S::Error> {
+            ) -> ::core::result::Result<S::Ok, S::Error> {
                 <Self as $crate::ReprBytes>::map_bytes(self, |bytes| {
                     serializer.serialize_bytes(&bytes)
                 })
@@ -283,7 +285,7 @@ macro_rules! derive_serde_from_repr_bytes {
         impl<'de> $crate::_exports::serde::de::Deserialize<'de> for $mytype {
             fn deserialize<D: $crate::_exports::serde::de::Deserializer<'de>>(
                 deserializer: D,
-            ) -> Result<$mytype, D::Error> {
+            ) -> ::core::result::Result<$mytype, D::Error> {
                 struct KeyVisitor;
 
                 impl<'de> $crate::_exports::serde::de::Visitor<'de> for KeyVisitor {
@@ -302,7 +304,7 @@ macro_rules! derive_serde_from_repr_bytes {
                     fn visit_bytes<E: $crate::_exports::serde::de::Error>(
                         self,
                         value: &[u8],
-                    ) -> Result<Self::Value, E> {
+                    ) -> ::core::result::Result<Self::Value, E> {
                         use $crate::{GenericArray, LengthMismatch, ReprBytes};
                         if value.len() != <$mytype as ReprBytes>::size() {
                             return Err(<E as $crate::_exports::serde::de::Error>::custom(
@@ -319,7 +321,10 @@ macro_rules! derive_serde_from_repr_bytes {
                         })?)
                     }
 
-                    fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
+                    fn visit_seq<V>(
+                        self,
+                        mut seq: V,
+                    ) -> ::core::result::Result<Self::Value, V::Error>
                     where
                         V: $crate::_exports::serde::de::SeqAccess<'de>,
                     {
@@ -431,7 +436,7 @@ mod tests {
     impl<'a> TryFrom<&'a [u8]> for TwentyBytes {
         type Error = <[u8; 20] as TryFrom<&'a [u8]>>::Error;
 
-        fn try_from(src: &'a [u8]) -> Result<Self, Self::Error> {
+        fn try_from(src: &'a [u8]) -> ::core::result::Result<Self, Self::Error> {
             Ok(Self {
                 bytes: <[u8; 20]>::try_from(src)?,
             })

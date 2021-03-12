@@ -2031,10 +2031,12 @@ dependencies = [
  "criterion",
  "curve25519-dalek",
  "datatest",
+ "displaydoc",
  "hkdf",
  "mc-crypto-digestible",
  "mc-crypto-hashes",
  "mc-crypto-keys",
+ "mc-crypto-x509-test-vectors",
  "mc-fog-sig-authority",
  "mc-test-vectors-account-keys",
  "mc-util-from-random",
@@ -2042,11 +2044,13 @@ dependencies = [
  "mc-util-serial",
  "mc-util-test-helper",
  "mc-util-test-vector",
+ "pem",
  "prost",
  "rand 0.7.3",
  "rand_core 0.5.1",
  "rand_hc 0.2.0",
  "tempdir",
+ "x509-signature",
  "zeroize",
 ]
 
@@ -2096,6 +2100,7 @@ dependencies = [
  "prost",
  "protobuf",
  "rand 0.7.3",
+ "x509-signature",
 ]
 
 [[package]]
@@ -2986,6 +2991,7 @@ dependencies = [
  "mc-crypto-digestible",
  "mc-crypto-keys",
  "mc-crypto-rand",
+ "mc-crypto-x509-test-vectors",
  "mc-fog-report-connection",
  "mc-fog-report-validation",
  "mc-fog-report-validation-test-utils",
@@ -3005,6 +3011,7 @@ dependencies = [
  "mc-watcher",
  "more-asserts",
  "num_cpus",
+ "pem",
  "prost",
  "protobuf",
  "rand 0.7.3",
@@ -3013,6 +3020,7 @@ dependencies = [
  "serde_json",
  "structopt",
  "tempdir",
+ "x509-signature",
 ]
 
 [[package]]
@@ -3385,8 +3393,11 @@ version = "1.0.1-pre1"
 dependencies = [
  "mc-account-keys",
  "mc-api",
+ "mc-crypto-x509-test-vectors",
  "mc-test-vectors-definitions",
  "mc-util-test-vector",
+ "pem",
+ "x509-signature",
 ]
 
 [[package]]
@@ -3461,15 +3472,18 @@ dependencies = [
  "maplit",
  "mc-account-keys",
  "mc-crypto-keys",
+ "mc-crypto-x509-test-vectors",
  "mc-fog-report-validation",
  "mc-fog-report-validation-test-utils",
  "mc-transaction-core",
  "mc-util-from-random",
  "mc-util-serial",
  "mc-util-test-helper",
+ "pem",
  "prost",
  "rand 0.7.3",
  "rand_core 0.5.1",
+ "x509-signature",
  "yaml-rust",
  "zeroize",
 ]
@@ -3637,6 +3651,7 @@ dependencies = [
  "hex 0.4.2",
  "mc-account-keys",
  "mc-crypto-rand",
+ "mc-crypto-x509-test-vectors",
  "mc-util-from-random",
  "mc-util-serial",
  "pem",

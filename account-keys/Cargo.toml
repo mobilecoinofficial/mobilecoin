@@ -6,13 +6,6 @@ edition = "2018"
 readme = "README.md"
 
 [dependencies]
-# External dependencies
-hkdf = { version = "0.9.0", default-features = false }
-prost = { version = "0.6.1", default-features = false, features = ["prost-derive"] }
-rand_core = { version = "0.5", default-features = false }
-zeroize = { version = "1", default-features = false }
-
-# MobileCoin dependencies
 mc-crypto-digestible = { path = "../crypto/digestible" }
 mc-crypto-hashes = { path = "../crypto/hashes" }
 mc-crypto-keys = { path = "../crypto/keys", default-features = false }
@@ -20,6 +13,12 @@ mc-fog-sig-authority = { path = "../fog/sig/authority" }
 mc-util-from-random = { path = "../util/from-random" }
 mc-util-repr-bytes = { path = "../util/repr-bytes", default-features = false, features = ["alloc"] }
 mc-util-serial = { path = "../util/serial" }
+
+displaydoc = { version = "0.1.7", default-features = false }
+hkdf = { version = "0.9.0", default-features = false }
+prost = { version = "0.6.1", default-features = false, features = ["prost-derive"] }
+rand_core = { version = "0.5", default-features = false }
+zeroize = { version = "1", default-features = false }
 
 [target.'cfg(any(target_feature = "avx2", target_feature = "avx"))'.dependencies]
 curve25519-dalek = { version = "3.0", default-features = false, features = ["simd_backend", "nightly"] }
@@ -30,15 +29,18 @@ curve25519-dalek = { version = "3.0", default-features = false, features = ["nig
 blake2 = { version = "0.9.0", default-features = false }
 
 [dev-dependencies]
-criterion = "0.3"
-datatest = "0.6"
-rand = "0.7"
-rand_hc = "0.2"
-tempdir = "0.3"
-
+mc-crypto-x509-test-vectors = { path = "../crypto/x509/test-vectors" }
 mc-test-vectors-account-keys = { path = "../test-vectors/account-keys" }
 mc-util-test-helper = { path = "../util/test-helper" }
 mc-util-test-vector = { path = "../util/test-vector" }
+
+criterion = "0.3"
+datatest = "0.6"
+pem = "0.8"
+rand = "0.7"
+rand_hc = "0.2"
+tempdir = "0.3"
+x509-signature = "0.5"
 
 [[bench]]
 name = "account_keys_benchmarks"

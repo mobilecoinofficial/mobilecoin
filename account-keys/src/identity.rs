@@ -6,16 +6,22 @@
 //! at least enough entropy as the length of any one of the derived keys.
 //!
 //! The RootIdentity object contains 32 bytes of "root entropy", used with HKDF
-//! to produce the other MobileCoin private keys. This is useful because an AccountKey
-//! derived this way can be represented with a smaller amount of information.
+//! to produce the other MobileCoin private keys. This is useful because an
+//! AccountKey derived this way can be represented with a smaller amount of
+//! information.
 //!
 //! The other (fog-related) fields of RootIdentity are analogous to AccountKey.
 
-use crate::AccountKey;
+use crate::{
+    account_keys::AccountKey,
+    check_fog_key_fields,
+    error::{Error, Result},
+};
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use core::{
     convert::{From, TryFrom},
     hash::Hash,
+    result::Result as StdResult,
 };
 use curve25519_dalek::scalar::Scalar;
 use hkdf::Hkdf;
@@ -54,7 +60,7 @@ impl From<&[u8; 32]> for RootEntropy {
 impl TryFrom<&[u8]> for RootEntropy {
     type Error = LengthMismatch;
 
-    fn try_from(src: &[u8]) -> Result<RootEntropy, LengthMismatch> {
+    fn try_from(src: &[u8]) -> StdResult<RootEntropy, LengthMismatch> {
         if src.len() == 32 {
             let mut result = Self { bytes: [0u8; 32] };
             result.bytes.copy_from_slice(src);
@@ -98,22 +104,25 @@ pub struct RootIdentity {
 }
 
 impl RootIdentity {
-    /// Generate a random root identity with a specific fog_report_url configured
+    /// Generate a random root identity with a specific fog_report_url
+    /// configured
     pub fn random_with_fog<T: RngCore + CryptoRng>(
         rng: &mut T,
         fog_report_url: &str,
         fog_report_id: &str,
         fog_authority_spki: &[u8],
-    ) -> Self {
+    ) -> Result<Self> {
         let mut result = Self::from_random(rng);
 
         if !fog_report_url.is_empty() {
+            check_fog_key_fields(fog_report_url, fog_report_id, fog_authority_spki)?;
+
             result.fog_report_url = fog_report_url.to_owned();
             result.fog_report_id = fog_report_id.to_owned();
             result.fog_authority_spki = fog_authority_spki.to_owned();
         }
 
-        result
+        Ok(result)
     }
 }
 
@@ -137,8 +146,10 @@ impl FromRandom for RootIdentity {
 }
 
 /// Derive an AccountKey from RootIdentity
-impl From<&RootIdentity> for AccountKey {
-    fn from(src: &RootIdentity) -> Self {
+impl TryFrom<&RootIdentity> for AccountKey {
+    type Error = Error;
+
+    fn try_from(src: &RootIdentity) -> Result<Self> {
         let spend_private_key = RistrettoPrivate::from(root_identity_hkdf_helper(
             src.root_entropy.as_ref(),
             b"spend",
@@ -147,13 +158,17 @@ impl From<&RootIdentity> for AccountKey {
             src.root_entropy.as_ref(),
             b"view",
         ));
-        AccountKey::new_with_fog(
-            &spend_private_key,
-            &view_private_key,
-            src.fog_report_url.clone(),
-            src.fog_report_id.clone(),
-            src.fog_authority_spki.clone(),
-        )
+        if src.fog_report_url.is_empty() {
+            Ok(AccountKey::new(&spend_private_key, &view_private_key))
+        } else {
+            AccountKey::new_with_fog(
+                &spend_private_key,
+                &view_private_key,
+                &src.fog_report_url,
+                src.fog_report_id.clone(),
+                &src.fog_authority_spki,
+            )
+        }
     }
 }
 
@@ -198,8 +213,21 @@ mod testing {
             let result: RootIdentity = mc_util_serial::decode(&ser).unwrap();
             assert_eq!(root_id, result);
 
-            let root_id =
-                RootIdentity::random_with_fog(&mut rng, "fog://example.com", "1", &[7u8, 7u8]);
+            let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+                .expect("Could not parse RSA test vector as PEM")
+                .contents;
+            let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+                .expect("Could not parse X509 certificate from DER")
+                .subject_public_key_info()
+                .spki();
+
+            let root_id = RootIdentity::random_with_fog(
+                &mut rng,
+                "fog://fog.unittest.mobilecoin.com",
+                "1",
+                fog_authority_spki,
+            )
+            .expect("Could not construct root identity with fog data");
             let ser = mc_util_serial::encode(&root_id);
             let result: RootIdentity = mc_util_serial::decode(&ser).unwrap();
             assert_eq!(root_id, result);
@@ -209,7 +237,8 @@ mod testing {
     #[data(AcctPrivKeysFromRootEntropy::from_jsonl("../test-vectors/vectors"))]
     #[test]
     fn acct_priv_keys_from_root_entropy(case: AcctPrivKeysFromRootEntropy) {
-        let account_key = AccountKey::from(&RootIdentity::from(&case.root_entropy));
+        let account_key = AccountKey::try_from(&RootIdentity::from(&case.root_entropy))
+            .expect("Could not create account key from root identity");
         assert_eq!(
             account_key.view_private_key().to_bytes(),
             case.view_private_key

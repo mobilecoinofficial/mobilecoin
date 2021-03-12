@@ -2,8 +2,9 @@
 
 //! CryptoNote-style View Key.
 //!
-//! A view key (a,B) contains half of a user's private information, and is used to identify
-//! transaction outputs sent to the user, and to view the amounts of those outputs.
+//! A view key (a,B) contains half of a user's private information, and is used
+//! to identify transaction outputs sent to the user, and to view the amounts of
+//! those outputs.
 
 use core::hash::{Hash, Hasher};
 use mc_crypto_keys::{RistrettoPrivate, RistrettoPublic};

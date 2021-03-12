@@ -39,4 +39,6 @@ structopt = "0.3"
 x509-signature = "0.5"
 
 [dev-dependencies]
+mc-crypto-x509-test-vectors = { path = "../../crypto/x509/test-vectors" }
+
 tempdir = "0.3"

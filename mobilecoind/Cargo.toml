@@ -61,12 +61,15 @@ tempdir = "0.3"
 [dev-dependencies]
 mc-common = { path = "../common", features = ["loggers"] }
 mc-connection-test-utils = { path = "../connection/test-utils" }
+mc-crypto-x509-test-vectors = { path = "../crypto/x509/test-vectors" }
 mc-fog-report-validation = { path = "../fog/report/validation", features = ["automock"] }
 mc-fog-report-validation-test-utils = { path = "../fog/report/validation/test-utils" }
 mc-transaction-core-test-utils = { path = "../transaction/core/test-utils" }
 mc-util-from-random = { path = "../util/from-random" }
 
 more-asserts = "0.2"
+pem = "0.8"
+x509-signature = "0.5"
 
 [build-dependencies]
 # Resolves a build failure for the x86_64-apple-darwin target by overriding the grpcio libz dep, which is pinned to v1.0.25

@@ -52,7 +52,7 @@ impl TryFrom<&external::AccountKey> for AccountKey {
                 &src.fog_report_url,
                 src.fog_report_id.clone(),
                 &src.fog_authority_spki[..],
-            ))
+            )?)
         }
     }
 }
@@ -62,68 +62,81 @@ mod tests {
     use super::*;
     use rand::{rngs::StdRng, SeedableRng};
 
-    // Test converting between external::AccountKey and account_keys::AccountKey
+    /// Test converting between external::AccountKey and
+    /// account_keys::AccountKey
     #[test]
     fn test_account_key_conversion() {
         let mut rng: StdRng = SeedableRng::from_seed([123u8; 32]);
 
-        // without fog_report_url
-        {
-            // account_keys -> external
-            let account_key = AccountKey::random(&mut rng);
-            let proto_credentials = external::AccountKey::from(&account_key);
-            assert_eq!(
-                *proto_credentials.get_view_private_key(),
-                external::RistrettoPrivate::from(account_key.view_private_key())
-            );
-            assert_eq!(
-                *proto_credentials.get_spend_private_key(),
-                external::RistrettoPrivate::from(account_key.spend_private_key())
-            );
-            assert_eq!(proto_credentials.fog_report_url, String::from(""));
+        // account_keys -> external
+        let account_key = AccountKey::random(&mut rng);
+        let proto_credentials = external::AccountKey::from(&account_key);
+        assert_eq!(
+            *proto_credentials.get_view_private_key(),
+            external::RistrettoPrivate::from(account_key.view_private_key())
+        );
+        assert_eq!(
+            *proto_credentials.get_spend_private_key(),
+            external::RistrettoPrivate::from(account_key.spend_private_key())
+        );
+        assert_eq!(proto_credentials.fog_report_url, String::from(""));
 
-            assert_eq!(proto_credentials.fog_authority_spki.len(), 0);
+        assert_eq!(proto_credentials.fog_authority_spki.len(), 0);
 
-            assert_eq!(proto_credentials.fog_report_id, String::from(""));
+        assert_eq!(proto_credentials.fog_report_id, String::from(""));
 
-            // external -> account_keys
-            let account_key2 = AccountKey::try_from(&proto_credentials).unwrap();
-            assert_eq!(account_key, account_key2);
-        }
+        // external -> account_keys
+        let account_key2 = AccountKey::try_from(&proto_credentials).unwrap();
+        assert_eq!(account_key, account_key2);
+    }
 
-        // with valid fog_report_url
-        {
-            // account_keys -> external
-            let tmp_account_key = AccountKey::random(&mut rng);
-            let account_key = AccountKey::new_with_fog(
-                tmp_account_key.spend_private_key(),
-                tmp_account_key.view_private_key(),
-                "fog://test.mobilecoin.com".to_string(),
-                "99".to_string(),
-                vec![9, 9, 9, 9],
-            );
+    /// Test converting between external::AccountKey and
+    /// account_keys::AccountKey when fog data is present.
+    ///
+    /// This is strictly a superset of the no-fog test right now.
+    #[test]
+    fn test_account_key_conversion_with_fog() {
+        let mut rng: StdRng = SeedableRng::from_seed([123u8; 32]);
 
-            let proto_credentials = external::AccountKey::from(&account_key);
-            assert_eq!(
-                *proto_credentials.get_view_private_key(),
-                external::RistrettoPrivate::from(account_key.view_private_key())
-            );
-            assert_eq!(
-                *proto_credentials.get_spend_private_key(),
-                external::RistrettoPrivate::from(account_key.spend_private_key())
-            );
-            assert_eq!(
-                proto_credentials.fog_report_url,
-                String::from("fog://test.mobilecoin.com")
-            );
+        let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+            .expect("Could not parse RSA test vector as PEM")
+            .contents;
+        let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+            .expect("Could not parse X509 certificate from DER")
+            .subject_public_key_info()
+            .spki();
 
-            assert_eq!(proto_credentials.fog_authority_spki, vec![9, 9, 9, 9],);
+        // account_keys -> external
+        let tmp_account_key = AccountKey::random(&mut rng);
+        let account_key = AccountKey::new_with_fog(
+            tmp_account_key.spend_private_key(),
+            tmp_account_key.view_private_key(),
+            "fog://fog.unittest.mobilecoin.com".to_string(),
+            "99".to_string(),
+            fog_authority_spki,
+        )
+        .expect("Could not construct account key with fog data");
 
-            assert_eq!(proto_credentials.fog_report_id, String::from("99"));
+        let proto_credentials = external::AccountKey::from(&account_key);
+        assert_eq!(
+            *proto_credentials.get_view_private_key(),
+            external::RistrettoPrivate::from(account_key.view_private_key())
+        );
+        assert_eq!(
+            *proto_credentials.get_spend_private_key(),
+            external::RistrettoPrivate::from(account_key.spend_private_key())
+        );
+        assert_eq!(
+            proto_credentials.fog_report_url,
+            String::from("fog://fog.unittest.mobilecoin.com")
+        );
 
-            // external -> account_keys
-            let account_key2 = AccountKey::try_from(&proto_credentials).unwrap();
-            assert_eq!(account_key, account_key2);
-        }
+        assert_eq!(proto_credentials.fog_authority_spki, fog_authority_spki);
+
+        assert_eq!(proto_credentials.fog_report_id, String::from("99"));
+
+        // external -> account_keys
+        let account_key2 = AccountKey::try_from(&proto_credentials).unwrap();
+        assert_eq!(account_key, account_key2);
     }
 }

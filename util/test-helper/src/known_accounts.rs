@@ -5,7 +5,7 @@
 use mc_account_keys::{AccountKey, PublicAddress, RootIdentity};
 use rand::rngs::StdRng;
 use rand_core::SeedableRng;
-use std::cmp;
+use std::{cmp, convert::TryFrom};
 
 // The default accounts are the first NUMBER_OF_DEFAULT_ACCOUNTS that we generate
 const NUMBER_OF_DEFAULT_ACCOUNTS: usize = 10;
@@ -59,7 +59,7 @@ const E9: [u8; 32] = [
 
 // TODO: consider updating this to AccountIdentity, or concatenating keys of both types
 fn derive_account_key(entropy: [u8; 32]) -> AccountKey {
-    AccountKey::from(&RootIdentity::from(&entropy))
+    AccountKey::try_from(&RootIdentity::from(&entropy)).expect("Invalid root identity")
 }
 
 // This macro saves boilerplate in the creation of the lazy_static KNOWN_ACCOUNT_KEYS_0_10

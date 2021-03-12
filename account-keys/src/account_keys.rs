@@ -12,8 +12,14 @@
 
 #![allow(non_snake_case)]
 
-use crate::{domain_separators::SUBADDRESS_DOMAIN_TAG, view_key::ViewKey};
+use crate::{
+    constants::{DEFAULT_SUBADDRESS_INDEX, SUBADDRESS_DOMAIN_TAG},
+    error::Result,
+    limits::{check_fog_address_fields, check_fog_key_fields},
+    view_key::ViewKey,
+};
 use alloc::{
+    borrow::ToOwned,
     string::{String, ToString},
     vec::Vec,
 };
@@ -22,6 +28,7 @@ use core::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
+    result::Result as StdResult,
 };
 use curve25519_dalek::scalar::Scalar;
 use mc_crypto_digestible::Digestible;
@@ -31,9 +38,6 @@ use mc_util_from_random::FromRandom;
 use prost::Message;
 use rand_core::{CryptoRng, RngCore};
 use zeroize::Zeroize;
-
-/// An account's "default address" is its zero^th subaddress.
-pub const DEFAULT_SUBADDRESS_INDEX: u64 = 0;
 
 /// A MobileCoin user's public subaddress.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Message, Clone, Digestible)]
@@ -47,7 +51,8 @@ pub struct PublicAddress {
     spend_public_key: RistrettoPublic,
 
     /// This is the URL to talk to the fog report server.
-    /// Empty if no fog for this public address, should be parseable as mc_util_uri::FogUri.
+    /// Empty if no fog for this public address, should be parseable as
+    /// mc_util_uri::FogUri.
     #[prost(string, tag = "3")]
     fog_report_url: String,
 
@@ -89,7 +94,8 @@ impl fmt::Display for PublicAddress {
 }
 
 impl PublicAddress {
-    /// Create a new public address from CryptoNote key pair (with no account service)
+    /// Create a new public address from CryptoNote key pair (with no account
+    /// service)
     ///
     /// # Arguments
     /// `spend_public_key` - The user's public subaddress spend key `D`,
@@ -105,14 +111,17 @@ impl PublicAddress {
         }
     }
 
-    /// Create a new public address with specific public keys and account service name and authority sig.
+    /// Create a new public address with specific public keys and account
+    /// service name and authority sig.
     ///
     /// # Arguments
     /// `spend_public_key` - The user's public subaddress spend key `D`,
     /// `view_public_key` - The user's public subaddress view key `C`,
     /// `fog_report_url` - User's fog report server url
-    /// `fog_report_id` - The id labelling the report to use, from among the several reports which might be served by the fog report server.
-    /// `fog_authority_sig` - A signature over the fog authority fingerprint using the subaddress_spend_private_key
+    /// `fog_report_id` - The id labelling the report to use, from among the
+    /// several reports which might be served by the fog report server.
+    /// `fog_authority_sig` - A signature over the fog authority fingerprint
+    /// using the subaddress_spend_private_key
     #[inline]
     pub fn new_with_fog(
         spend_public_key: &RistrettoPublic,
@@ -120,14 +129,17 @@ impl PublicAddress {
         fog_report_url: impl ToString,
         fog_report_id: String,
         fog_authority_sig: impl AsRef<[u8]>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        let fog_report_url = fog_report_url.to_string();
+        check_fog_address_fields(&fog_report_url, &fog_report_id, fog_authority_sig.as_ref())?;
+
+        Ok(Self {
             view_public_key: *view_public_key,
             spend_public_key: *spend_public_key,
-            fog_report_url: fog_report_url.to_string(),
+            fog_report_url,
             fog_report_id,
             fog_authority_sig: fog_authority_sig.as_ref().to_vec(),
-        }
+        })
     }
 
     /// Get the public subaddress view key.
@@ -172,7 +184,7 @@ impl AuthorityVerifier for PublicAddress {
     type Sig = <RistrettoPublic as AuthorityVerifier>::Sig;
     type Error = <RistrettoPublic as AuthorityVerifier>::Error;
 
-    fn verify_authority(&self, spki_bytes: &[u8], sig: &Self::Sig) -> Result<(), Self::Error> {
+    fn verify_authority(&self, spki_bytes: &[u8], sig: &Self::Sig) -> StdResult<(), Self::Error> {
         self.view_public_key.verify_authority(spki_bytes, sig)
     }
 }
@@ -259,24 +271,27 @@ impl AccountKey {
     /// * `view_private_key` - The user's private view key `a`.
     /// * `fog_report_url` - Url of fog report service
     /// * `fog_report_id` - The id labelling the report to use, from among the
-    ///                     several reports which might be served by the fog report server.
+    ///   several reports which might be served by the fog report server.
     /// * `fog_authority` - The DER-encoded subjectPublicKeyInfo of the fog
-    ///                     authority, which will be signed by the user when
-    ///                     constructing the public address.
+    ///   authority, which will be signed by the user when constructing the
+    ///   public address.
     pub fn new_with_fog(
         spend_private_key: &RistrettoPrivate,
         view_private_key: &RistrettoPrivate,
         fog_report_url: impl ToString,
         fog_report_id: String,
         fog_authority_spki: impl AsRef<[u8]>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        let fog_report_url = fog_report_url.to_string();
+        check_fog_key_fields(&fog_report_url, &fog_report_id, fog_authority_spki.as_ref())?;
+
+        Ok(Self {
             spend_private_key: *spend_private_key,
             view_private_key: *view_private_key,
-            fog_report_url: fog_report_url.to_string(),
+            fog_report_url,
             fog_report_id,
             fog_authority_spki: fog_authority_spki.as_ref().to_vec(),
-        }
+        })
     }
 
     /// Get the view private key.
@@ -334,15 +349,20 @@ impl AccountKey {
     }
 
     /// Create an account key with random secret keys, and the fog service
-    /// url "fog://example.com"
+    /// url "fog://fog.unittest.mobilecoin.com"
     /// (intended for tests).
-    pub fn random_with_fog<T: RngCore + CryptoRng>(rng: &mut T) -> Self {
+    pub fn random_with_fog<T: RngCore + CryptoRng>(
+        rng: &mut T,
+        fog_report_url: &str,
+        fog_report_id: &str,
+        fog_authority_spki: &[u8],
+    ) -> Result<Self> {
         Self::new_with_fog(
             &RistrettoPrivate::from_random(rng),
             &RistrettoPrivate::from_random(rng),
-            "fog://example.com".to_string(),
-            Default::default(),
-            <Vec<u8>>::default(),
+            fog_report_url,
+            fog_report_id.to_owned(),
+            fog_authority_spki,
         )
     }
 
@@ -434,15 +454,18 @@ impl AccountKey {
 
 #[cfg(test)]
 mod account_key_tests {
-    use super::*;
     use alloc::boxed::Box;
     use core::convert::TryFrom;
+
     use datatest::data;
+    use rand::prelude::StdRng;
+    use rand_core::SeedableRng;
+
     use mc_crypto_keys::RistrettoSignature;
     use mc_test_vectors_account_keys::*;
     use mc_util_test_vector::TestVector;
-    use rand::prelude::StdRng;
-    use rand_core::SeedableRng;
+
+    use super::*;
 
     // Helper method to verify the signature of a public address
     fn verify_signature(subaddress: &PublicAddress, spki: &[u8]) {
@@ -469,7 +492,21 @@ mod account_key_tests {
                 assert_eq!(acct.default_subaddress(), result);
             }
             {
-                let acct = AccountKey::random_with_fog(&mut rng);
+                let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+                    .expect("Could not parse RSA test vector as PEM")
+                    .contents;
+                let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+                    .expect("Could not parse X509 certificate from DER")
+                    .subject_public_key_info()
+                    .spki();
+
+                let acct = AccountKey::random_with_fog(
+                    &mut rng,
+                    "fog://fog.unittest.mobilecoin.com",
+                    "",
+                    fog_authority_spki,
+                )
+                .expect("Could not create AccountKey from fog.");
                 let ser = mc_util_serial::encode(&acct.default_subaddress());
                 let result: PublicAddress = mc_util_serial::decode(&ser).unwrap();
                 assert_eq!(acct.default_subaddress(), result);
@@ -563,9 +600,15 @@ mod account_key_tests {
         let mut rng: StdRng = SeedableRng::from_seed([42u8; 32]);
         let view_private = RistrettoPrivate::from_random(&mut rng);
         let spend_private = RistrettoPrivate::from_random(&mut rng);
-        let fog_url = "fog://example.com";
-        let mut fog_authority_spki = [0u8; 32];
-        rng.fill_bytes(&mut fog_authority_spki);
+        let fog_url = "fog://fog.unittest.mobilecoin.com";
+        let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+            .expect("Could not parse RSA test vector as PEM")
+            .contents;
+        let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+            .expect("Could not parse X509 certificate from DER")
+            .subject_public_key_info()
+            .spki();
+
         let fog_report_key = String::from("");
 
         let account_key = AccountKey::new_with_fog(
@@ -574,12 +617,14 @@ mod account_key_tests {
             fog_url,
             fog_report_key,
             fog_authority_spki,
-        );
+        )
+        .expect("Could not construct AccountKey with fog in order to verify signature");
 
         let index = rng.next_u64();
         let subaddress = account_key.subaddress(index);
 
-        // Note: The fog_authority_fingerprint is published, so it is known by the verifier.
+        // Note: The fog_authority_fingerprint is published, so it is known by the
+        // verifier.
         verify_signature(&subaddress, &fog_authority_spki);
     }
 }

@@ -1,13 +1,15 @@
 use mc_account_keys::{AccountKey, RootIdentity};
 use mc_test_vectors_definitions::account_keys::*;
 use mc_util_test_vector::write_jsonl;
+use std::convert::TryFrom;
 
 fn main() {
     write_jsonl("../vectors", || {
         (0..10)
             .map(|n| {
                 let root_entropy = [n; 32];
-                let account_key = AccountKey::from(&RootIdentity::from(&root_entropy));
+                let account_key = AccountKey::try_from(&RootIdentity::from(&root_entropy))
+                    .expect("Invalid root identity");
                 AcctPrivKeysFromRootEntropy {
                     root_entropy,
                     view_private_key: account_key.view_private_key().to_bytes(),
@@ -21,7 +23,8 @@ fn main() {
     write_jsonl("../vectors", || {
         (0..10)
             .map(|n| {
-                let account_key = AccountKey::from(&RootIdentity::from(&[n; 32]));
+                let account_key = AccountKey::try_from(&RootIdentity::from(&[n; 32]))
+                    .expect("Invalid root identity");
                 let subaddress = account_key.default_subaddress();
                 DefaultSubaddrKeysFromAcctPrivKeys {
                     view_private_key: account_key.view_private_key().to_bytes(),
@@ -43,7 +46,8 @@ fn main() {
     write_jsonl("../vectors", || {
         (0..10)
             .map(|n| {
-                let account_key = AccountKey::from(&RootIdentity::from(&[n; 32]));
+                let account_key = AccountKey::try_from(&RootIdentity::from(&[n; 32]))
+                    .expect("Invalid root identity");
                 let subaddress = account_key.subaddress(n as u64);
                 SubaddrKeysFromAcctPrivKeys {
                     view_private_key: account_key.view_private_key().to_bytes(),

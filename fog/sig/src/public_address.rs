@@ -71,6 +71,7 @@ mod tests {
     use mc_fog_types::Report;
     use rand_core::SeedableRng;
     use rand_hc::Hc128Rng;
+    use std::convert::TryFrom;
 
     /// Setup a functional fog authority scheme.
     ///
@@ -94,8 +95,10 @@ mod tests {
                 .expect("Could not verify test chain")
                 .subject_public_key_info()
                 .spki(),
-        );
-        let account_key = AccountKey::from(&root_identity);
+        )
+        .expect("Could not construct root identity with fog details");
+        let account_key = AccountKey::try_from(&root_identity)
+            .expect("Could not create AccountKey from root identity with fog details");
         let public_address = account_key.default_subaddress();
 
         (

@@ -504,9 +504,23 @@ pub mod transaction_builder_tests {
     #[test]
     // Spend a single input and send its full value to a single fog recipient.
     fn test_simple_fog_transaction() {
+        let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+            .expect("Could not parse RSA test vector as PEM")
+            .contents;
+        let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+            .expect("Could not parse X509 certificate from DER")
+            .subject_public_key_info()
+            .spki();
+
         let mut rng: StdRng = SeedableRng::from_seed([1u8; 32]);
         let sender = AccountKey::random(&mut rng);
-        let recipient = AccountKey::random_with_fog(&mut rng);
+        let recipient = AccountKey::random_with_fog(
+            &mut rng,
+            "fog://fog.unittest.mobilecoin.com",
+            "",
+            fog_authority_spki,
+        )
+        .expect("Could not construct account key with fog data");
         let ingest_private_key = RistrettoPrivate::from_random(&mut rng);
         let value = 1475 * MILLIMOB_TO_PICOMOB;
 
@@ -590,10 +604,25 @@ pub mod transaction_builder_tests {
     #[test]
     // Use a custom PublicAddress to create the fog hint.
     fn test_custom_fog_hint_address() {
+        let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+            .expect("Could not parse RSA test vector as PEM")
+            .contents;
+        let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+            .expect("Could not parse X509 certificate from DER")
+            .subject_public_key_info()
+            .spki();
+
         let mut rng: StdRng = SeedableRng::from_seed([1u8; 32]);
         let sender = AccountKey::random(&mut rng);
         let recipient = AccountKey::random(&mut rng);
-        let fog_hint_address = AccountKey::random_with_fog(&mut rng).default_subaddress();
+        let fog_hint_address = AccountKey::random_with_fog(
+            &mut rng,
+            "fog://fog.unittest.mobilecoin.com",
+            "",
+            fog_authority_spki,
+        )
+        .expect("Could not construct AccountKey with fog data")
+        .default_subaddress();
         let ingest_private_key = RistrettoPrivate::from_random(&mut rng);
         let value = 1475 * MILLIMOB_TO_PICOMOB;
 

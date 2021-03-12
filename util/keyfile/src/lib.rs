@@ -112,13 +112,22 @@ mod testing {
             assert_eq!(entropy, result);
         }
 
+        let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+            .expect("Could not parse RSA test vector as PEM")
+            .contents;
+        let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+            .expect("Could not parse X509 certificate from DER")
+            .subject_public_key_info()
+            .spki();
+
         {
             let entropy = RootIdentity::random_with_fog(
                 &mut rng,
-                "fog://foobar.com",
+                "fog://fog.unittest.mobilecoin.com",
                 "",
-                &[9u8, 9u8, 9u8, 9u8],
-            );
+                fog_authority_spki,
+            )
+            .expect("Could not create fake keyfile identity");
             let f1 = dir.path().join("f0");
             write_keyfile(&f1, &entropy).unwrap();
             let result = read_keyfile(&f1).unwrap();
@@ -141,7 +150,21 @@ mod testing {
         }
 
         {
-            let acct_key = AccountKey::random_with_fog(&mut rng);
+            let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+                .expect("Could not parse RSA test vector as PEM")
+                .contents;
+            let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+                .expect("Could not parse X509 certificate from DER")
+                .subject_public_key_info()
+                .spki();
+
+            let acct_key = AccountKey::random_with_fog(
+                &mut rng,
+                "fog://fog.unittest.mobilecoin.com",
+                "",
+                fog_authority_spki,
+            )
+            .expect("Could not create fake authority key");
             let pubaddr = acct_key.default_subaddress();
             let f3 = dir.path().join("f3");
             write_pubfile(&f3, &pubaddr).unwrap();

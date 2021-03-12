@@ -63,7 +63,7 @@ pub enum Error<A: Debug + Display, R: Debug + Display> {
     NoSignature,
     /// There was an error parsing the signature
     SignatureParse(SignatureError),
-    /// There as an error verifying the authority signature: {0}
+    /// There was an error verifying the authority signature: {0}
     Authority(A),
     /// There was an error parsing or verifying the chain: {0}
     Chain(ChainError),

@@ -30,7 +30,10 @@ blake2 = { version = "0.9", default-features = false }
 
 [dev-dependencies]
 maplit = "1.0"
+pem = "0.8"
 yaml-rust = "0.4"
+x509-signature = "0.5"
 
 mc-fog-report-validation-test-utils = { path = "../../fog/report/validation/test-utils" }
+mc-crypto-x509-test-vectors = { path = "../../crypto/x509/test-vectors" }
 mc-util-test-helper = { path = "../../util/test-helper" }

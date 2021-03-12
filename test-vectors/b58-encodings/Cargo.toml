@@ -10,5 +10,9 @@ mc-test-vectors-definitions = { path = "../definitions" }
 [build-dependencies]
 mc-account-keys = { path = "../../account-keys" }
 mc-api = { path = "../../api" }
+mc-crypto-x509-test-vectors = { path = "../../crypto/x509/test-vectors" }
 mc-test-vectors-definitions = { path = "../definitions" }
 mc-util-test-vector = { path = "../../util/test-vector" }
+
+pem = "0.8"
+x509-signature = "0.5"

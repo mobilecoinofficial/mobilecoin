@@ -10,6 +10,7 @@ use rand::SeedableRng;
 use rand_hc::Hc128Rng as FixedRng;
 use std::{
     cmp::Ordering,
+    convert::TryFrom,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -23,7 +24,7 @@ pub fn write_keyfiles<P: AsRef<Path>>(
     name: &str,
     root_id: &RootIdentity,
 ) -> Result<(), std::io::Error> {
-    let acct_key = AccountKey::from(root_id);
+    let acct_key = AccountKey::try_from(root_id).expect("Invalid root identity");
 
     fs::create_dir_all(&path)?;
 
@@ -60,7 +61,8 @@ pub fn write_default_keyfiles<P: AsRef<Path>>(
             fog_url.unwrap_or(&""),
             fog_report_id.unwrap_or_default(),
             fog_authority_spki.unwrap_or_default(),
-        );
+        )
+        .expect("Invalid fog data given when creating root identity");
 
         write_keyfiles(path.as_ref(), &keyfile_name(i), &root_id)?;
     }
@@ -142,15 +144,22 @@ mod testing {
         let dir1 = TempDir::new("test").unwrap();
         let dir2 = TempDir::new("test").unwrap();
 
-        let fqdn = "example.com".to_string();
+        let der_bytes = pem::parse(mc_crypto_x509_test_vectors::ok_rsa_head())
+            .expect("Could not parse RSA test vector as PEM")
+            .contents;
+        let fog_authority_spki = x509_signature::parse_certificate(&der_bytes)
+            .expect("Could not parse X509 certificate from DER")
+            .subject_public_key_info()
+            .spki();
+
+        let fqdn = "fog://fog.unittest.mobilecoin.com".to_string();
         let fog_report_id = "1";
-        let fog_authority_spki = [18, 52, 18, 52];
         write_default_keyfiles(
             &dir1,
             10,
             Some(&fqdn),
             Some(fog_report_id),
-            Some(&fog_authority_spki),
+            Some(fog_authority_spki),
             DEFAULT_SEED,
         )
         .unwrap();
@@ -159,7 +168,7 @@ mod testing {
             10,
             Some(&fqdn),
             Some(fog_report_id),
-            Some(&fog_authority_spki),
+            Some(fog_authority_spki),
             DEFAULT_SEED,
         )
         .unwrap();
