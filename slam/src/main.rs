@@ -93,18 +93,11 @@ fn main() {
 
     let config = SlamConfig::from_args();
 
-    // Read account root_entropies from disk
-    let accounts: Vec<AccountKey> = mc_util_keyfile::keygen::read_default_root_entropies(
+    // Read account keys from disk
+    let accounts: Vec<AccountKey> = mc_util_keyfile::keygen::read_default_mnemonics(
         config.sample_data_dir.join(Path::new("keys")),
     )
-    .expect("Could not read default root entropies from keys")
-    .iter()
-    .map(|x| {
-        let mut root_id = x.clone();
-        root_id.fog_report_url = Default::default();
-        AccountKey::from(&root_id)
-    })
-    .collect();
+    .expect("Could not read default mnemonic keys");
 
     // Open the ledger_db to process the bootstrapped ledger
     log::info!(logger, "Loading ledger");

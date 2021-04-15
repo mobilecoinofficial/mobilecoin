@@ -19,7 +19,7 @@ use zeroize::Zeroize;
 
 /// An enumeration of errors which can occur while working with SLIP-0010 key
 /// derivation
-#[derive(Debug, Display, Eq, PartialEq)]
+#[derive(Clone, Debug, Display, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Error {
     /// There was an error creating the account key: {0}
     AccountKey(AccountKeyError),
@@ -665,11 +665,6 @@ mod test {
     #[test]
     fn mnemonic_into_account_key() {
         for data in EN_MNEMONIC_STRINGS.iter() {
-            std::eprintln!(
-                "Generating for phrase {} at path m/44'/866'/{}'",
-                data.phrase,
-                data.account_index
-            );
             let mnemonic = Mnemonic::from_phrase(data.phrase, Language::English)
                 .expect("Could not read test phrase into mnemonic");
             let key = mnemonic.derive_slip10_key(data.account_index);

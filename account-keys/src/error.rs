@@ -9,7 +9,7 @@ use displaydoc::Display;
 pub type Result<T> = StdResult<T, Error>;
 
 /// Errors which can occur when a field isn't well formed.
-#[derive(Debug, Display, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Display, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Error {
     /// The Fog Report URL is too long
     ReportUrlLength,

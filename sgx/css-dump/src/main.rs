@@ -32,7 +32,7 @@ fn main() {
     let input = if config.input.is_some() {
         std::fs::read(config.input.unwrap()).expect("Could not read input file")
     } else {
-        // sigstruct structures are 1 x86_64 page
+        // sigstruct structures should be 1208 bytes
         let mut bytes = vec![0u8; mem::size_of::<Signature>()];
         io::stdin()
             .read_exact(&mut bytes)

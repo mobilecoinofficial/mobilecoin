@@ -985,9 +985,9 @@ checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
 [[package]]
 name = "displaydoc"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f98e1bbbcbb1b2646d6e900da42974b641eb784851adcd4f0ae4c07c8bc7b42b"
+checksum = "3274a6bc8a6a4521291b53b9dcb8345e963fe931c3fc462a7d3ead71d7ccd30d"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.4",
@@ -3682,18 +3682,23 @@ version = "1.0.1-pre1"
 name = "mc-util-keyfile"
 version = "1.0.1-pre1"
 dependencies = [
+ "displaydoc",
  "hex 0.4.2",
  "mc-account-keys",
+ "mc-account-keys-slip10",
  "mc-crypto-rand",
+ "mc-crypto-x509-test-vectors",
  "mc-util-from-random",
  "mc-util-serial",
  "pem",
+ "prost",
  "rand 0.7.3",
  "rand_hc 0.2.0",
  "serde",
  "serde_json",
  "structopt",
- "tempdir",
+ "tempfile",
+ "tiny-bip39",
  "x509-signature",
 ]
 

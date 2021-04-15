@@ -25,18 +25,24 @@ path = "src/bin/read_pubfile.rs"
 
 [dependencies]
 mc-account-keys = { path = "../../account-keys" }
+mc-account-keys-slip10 = { path = "../../account-keys/slip10" }
 mc-crypto-rand = { path = "../../crypto/rand" }
 mc-util-from-random = { path = "../../util/from-random" }
 mc-util-serial = { path = "../../util/serial", features = ["std"] }
 
+displaydoc = "0.2"
 hex = "0.4"
 rand = "0.7"
 rand_hc = "0.2.0"
 pem = "0.8"
+prost = "0.6.1"
 serde = "1.0"
 serde_json = "1.0"
+tiny-bip39 = "0.8"
 structopt = "0.3"
 x509-signature = "0.5"
 
 [dev-dependencies]
-tempdir = "0.3"
+mc-crypto-x509-test-vectors = { path = "../../crypto/x509/test-vectors" }
+
+tempfile = "3.2"
