@@ -9,3 +9,4 @@ aead = "0.3"
 aes-gcm = { version = "0.6", default-features = false }
 block-cipher = "0.7"
 subtle = { version = "2", default-features = false }
+zeroize = { version = "1" }

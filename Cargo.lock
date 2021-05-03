@@ -2596,6 +2596,7 @@ dependencies = [
  "aes-gcm",
  "block-cipher",
  "subtle 2.2.3",
+ "zeroize",
 ]
 
 [[package]]
