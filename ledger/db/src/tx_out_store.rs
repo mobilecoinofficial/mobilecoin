@@ -790,7 +790,7 @@ pub mod tx_out_store_tests {
         membership_proofs::{hash_leaf, hash_nodes, Range, NIL_HASH},
         onetime_keys::*,
         tx::TxOut,
-        Amount,
+        Amount, MemoPayload,
     };
     use mc_util_from_random::FromRandom;
     use rand::{rngs::StdRng, SeedableRng};
@@ -839,6 +839,10 @@ pub mod tx_out_store_tests {
                 target_key: target_key.into(),
                 public_key: public_key.into(),
                 e_fog_hint: EncryptedFogHint::new(&[7u8; ENCRYPTED_FOG_HINT_LEN]),
+                e_memo: MemoPayload::default()
+                    .encrypt(&shared_secret)
+                    .as_slice()
+                    .to_vec(),
             };
             tx_outs.push(tx_out);
         }

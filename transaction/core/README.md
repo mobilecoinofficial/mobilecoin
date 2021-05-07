@@ -1,4 +1,4 @@
-## transaction
+## transaction-core
 
 In order for any payments network to function, it must be able to maintain a history of transactions. MobileCoin Ledger describes how the MobileCoin Network stores payment records in a public ledger. The ledger is implemented as a blockchain, in which each block contains transactions that include transaction outputs (*txos*) that might be spent in the future by their owners. Each transaction also includes a proof that all value spent in the transaction has never been spent before. The underlying design is based on the privacy-preserving CryptoNote ledger protocol, which obscures the identity of all *txo* owners using one-time recipient addresses. The link between sender and recipient is protected through the use of input rings that guard the actually-spent *txo* in a large set of possibly-spent *txos*.
 

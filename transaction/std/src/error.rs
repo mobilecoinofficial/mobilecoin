@@ -1,39 +1,40 @@
 // Copyright (c) 2018-2021 The MobileCoin Foundation
 
-use failure::Fail;
+use displaydoc::Display;
 use mc_fog_report_validation::FogPubkeyError;
 use mc_transaction_core::{ring_signature, ring_signature::Error, AmountError};
 
-#[derive(Debug, Fail)]
+/// An error that can occur when using the TransactionBuilder
+#[derive(Debug, Display)]
 pub enum TxBuilderError {
-    #[fail(display = "Ring Signature construction failed")]
+    /// Ring Signature construction failed
     RingSignatureFailed,
 
-    #[fail(display = "Range proof construction failed")]
+    /// Range proof construction failed
     RangeProofFailed,
 
-    #[fail(display = "Serialization failed: {}", _0)]
+    /// Serialization failed: {0}
     SerializationFailed(mc_util_serial::encode::Error),
 
-    #[fail(display = "Serialization failed: {}", _0)]
+    /// Serialization failed: {0}
     EncodingFailed(prost::EncodeError),
 
-    #[fail(display = "Bad Amount: {}", _0)]
+    /// Bad Amount: {0}
     BadAmount(AmountError),
 
-    #[fail(display = "Ring has incorrect size")]
+    /// Ring has incorrect size
     InvalidRingSize,
 
-    #[fail(display = "Input credentials: Ring contained invalid curve point")]
+    /// Input credentials: Ring contained invalid curve point
     RingInvalidCurvePoint,
 
-    #[fail(display = "No inputs")]
+    /// No inputs
     NoInputs,
 
-    #[fail(display = "Fog public key error: {}", _0)]
+    /// Fog public key error: {0}
     FogPublicKey(FogPubkeyError),
 
-    #[fail(display = "Key error: {}", _0)]
+    /// Key error: {0}
     KeyError(mc_crypto_keys::KeyError),
 }
 

@@ -22,6 +22,7 @@ mod domain_separators;
 pub mod encrypted_fog_hint;
 pub mod fog_hint;
 pub mod membership_proofs;
+mod memo;
 pub mod onetime_keys;
 pub mod range_proofs;
 pub mod ring_signature;
@@ -33,6 +34,7 @@ pub mod proptest_fixtures;
 
 pub use amount::{get_value_mask, Amount, AmountError, Commitment, CompressedCommitment};
 pub use blockchain::*;
+pub use memo::{LengthError, MemoPayload};
 
 /// Get the shared secret for a transaction output.
 ///

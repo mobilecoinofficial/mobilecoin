@@ -741,6 +741,7 @@ mod ledger_db_test {
                         &account_key.default_subaddress(),
                         &RistrettoPrivate::from_random(&mut rng),
                         Default::default(),
+                        Default::default(),
                     )
                     .unwrap()
                 })
@@ -793,6 +794,7 @@ mod ledger_db_test {
             1000,
             &account_key.default_subaddress(),
             &RistrettoPrivate::from_random(&mut rng),
+            Default::default(),
             Default::default(),
         )
         .unwrap();
@@ -849,6 +851,7 @@ mod ledger_db_test {
                     1000,
                     &recipient_account_key.default_subaddress(),
                     &RistrettoPrivate::from_random(&mut rng),
+                    Default::default(),
                     Default::default(),
                 )
                 .unwrap()
@@ -930,6 +933,7 @@ mod ledger_db_test {
                     1000,
                     &recipient_account_key.default_subaddress(),
                     &RistrettoPrivate::from_random(&mut rng),
+                    Default::default(),
                     Default::default(),
                 )
                 .unwrap()
@@ -1093,6 +1097,7 @@ mod ledger_db_test {
             &account_key.default_subaddress(),
             &RistrettoPrivate::from_random(&mut rng),
             Default::default(),
+            Default::default(),
         )
         .unwrap();
         let outputs = vec![tx_out];
@@ -1137,6 +1142,7 @@ mod ledger_db_test {
             10,
             &account_key.default_subaddress(),
             &RistrettoPrivate::from_random(&mut rng),
+            Default::default(),
             Default::default(),
         )
         .unwrap();
@@ -1251,6 +1257,7 @@ mod ledger_db_test {
                             &recipient_account_key.default_subaddress(),
                             &RistrettoPrivate::from_random(&mut rng),
                             Default::default(),
+                            Default::default(),
                         )
                         .unwrap()
                     })
@@ -1294,6 +1301,7 @@ mod ledger_db_test {
                         1000,
                         &recipient_account_key.default_subaddress(),
                         &RistrettoPrivate::from_random(&mut rng),
+                        Default::default(),
                         Default::default(),
                     )
                     .unwrap()
@@ -1347,6 +1355,7 @@ mod ledger_db_test {
             100,
             &account_key.default_subaddress(),
             &RistrettoPrivate::from_random(&mut rng),
+            Default::default(),
             Default::default(),
         )
         .unwrap();
@@ -1405,6 +1414,7 @@ mod ledger_db_test {
                 &account_key.default_subaddress(),
                 &RistrettoPrivate::from_random(&mut rng),
                 Default::default(),
+                Default::default(),
             )
             .unwrap();
             let outputs = vec![tx_out];
@@ -1428,6 +1438,7 @@ mod ledger_db_test {
                 33,
                 &account_key.default_subaddress(),
                 &RistrettoPrivate::from_random(&mut rng),
+                Default::default(),
                 Default::default(),
             )
             .unwrap();
@@ -1472,6 +1483,7 @@ mod ledger_db_test {
                 33,
                 &account_key.default_subaddress(),
                 &RistrettoPrivate::from_random(&mut rng),
+                Default::default(),
                 Default::default(),
             )
             .unwrap();
@@ -1533,6 +1545,7 @@ mod ledger_db_test {
                 100,
                 &account_key.default_subaddress(),
                 &RistrettoPrivate::from_random(&mut rng),
+                Default::default(),
                 Default::default(),
             )
             .unwrap();
