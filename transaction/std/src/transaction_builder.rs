@@ -26,7 +26,7 @@ use mc_util_from_random::FromRandom;
 use rand_core::{CryptoRng, RngCore};
 
 /// This is an API type for the transaction builder that helps name and organize
-/// data that is passed when creating a chnage output.
+/// data that is passed when creating a change output.
 ///
 /// When creating a standard change output, the primary address is used to
 /// create the fog hint, and the change subaddress actually owns the change
