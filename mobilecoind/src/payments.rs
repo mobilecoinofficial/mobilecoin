@@ -877,7 +877,7 @@ impl<T: BlockchainConnection + UserTxConnection + 'static, FPR: FogPubkeyResolve
         if total_value > input_value {
             return Err(Error::InsufficientFunds);
         }
-        let change = input_value - total_value - tx_builder.fee;
+        let change = input_value - total_value - tx_builder.get_fee();
 
         // If we do, add an output for that as well.
         if change > 0 {
@@ -970,6 +970,7 @@ mod test {
             1,
             &alice.default_subaddress(),
             &tx_secret_key_for_txo,
+            Default::default(),
             Default::default(),
         )
         .unwrap();

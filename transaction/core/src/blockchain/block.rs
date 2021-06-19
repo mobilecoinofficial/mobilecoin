@@ -228,6 +228,7 @@ mod block_tests {
                     &recipient.default_subaddress(),
                     &RistrettoPrivate::from_random(rng),
                     Default::default(),
+                    Default::default(),
                 )
                 .unwrap()
             })

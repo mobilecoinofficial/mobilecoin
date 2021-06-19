@@ -19,13 +19,16 @@ fn test_origin_tx_outs() -> Vec<TxOut> {
     accounts
         .iter()
         .map(|acct| {
-            TxOut::new(
+            let mut tx_out = TxOut::new(
                 rng.next_u32() as u64,
                 &acct.default_subaddress(),
                 &RistrettoPrivate::from_random(&mut rng),
                 EncryptedFogHint::fake_onetime_hint(&mut rng),
+                Default::default(),
             )
-            .unwrap()
+            .unwrap();
+            tx_out.e_memo.clear();
+            tx_out
         })
         .collect()
 }

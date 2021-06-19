@@ -22,6 +22,9 @@ impl From<&tx::TxOut> for external::TxOut {
         let hint_bytes = source.e_fog_hint.as_ref().to_vec();
         tx_out.mut_e_fog_hint().set_data(hint_bytes);
 
+        let memo_bytes = source.e_memo.clone();
+        tx_out.set_e_memo(memo_bytes);
+
         tx_out
     }
 }
@@ -46,11 +49,14 @@ impl TryFrom<&external::TxOut> for tx::TxOut {
         let e_fog_hint = EncryptedFogHint::try_from(source.get_e_fog_hint().get_data())
             .map_err(|_| ConversionError::ArrayCastError)?;
 
+        let e_memo = source.get_e_memo().to_vec();
+
         let tx_out = tx::TxOut {
             amount,
             target_key,
             public_key,
             e_fog_hint,
+            e_memo,
         };
         Ok(tx_out)
     }
@@ -74,6 +80,7 @@ mod tests {
             target_key: RistrettoPublic::from_random(&mut rng).into(),
             public_key: RistrettoPublic::from_random(&mut rng).into(),
             e_fog_hint: (&[0u8; ENCRYPTED_FOG_HINT_LEN]).into(),
+            e_memo: vec![0u8; 34],
         };
 
         let converted = external::TxOut::from(&source);

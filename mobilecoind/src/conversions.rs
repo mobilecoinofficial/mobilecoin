@@ -191,6 +191,7 @@ mod test {
             target_key: RistrettoPublic::from_random(&mut rng).into(),
             public_key: RistrettoPublic::from_random(&mut rng).into(),
             e_fog_hint: (&[0u8; ENCRYPTED_FOG_HINT_LEN]).into(),
+            e_memo: vec![0u8; 34],
         };
 
         let subaddress_index = 123;
@@ -275,6 +276,7 @@ mod test {
                 target_key: RistrettoPublic::from_random(&mut rng).into(),
                 public_key: RistrettoPublic::from_random(&mut rng).into(),
                 e_fog_hint: (&[0u8; ENCRYPTED_FOG_HINT_LEN]).into(),
+                e_memo: vec![0u8; 34],
             };
 
             let subaddress_index = 123;

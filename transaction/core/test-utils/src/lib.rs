@@ -203,13 +203,17 @@ pub fn initialize_ledger<L: Ledger, R: RngCore + CryptoRng>(
                 // Create an origin block.
                 let outputs: Vec<TxOut> = (0..RING_SIZE)
                     .map(|_i| {
-                        TxOut::new(
+                        let mut tx_out = TxOut::new(
                             value,
                             &account_key.default_subaddress(),
                             &RistrettoPrivate::from_random(rng),
                             Default::default(),
+                            Default::default(),
                         )
-                        .unwrap()
+                        .unwrap();
+                        // The origin block did not historically have memo fields
+                        tx_out.e_memo.clear();
+                        tx_out
                     })
                     .collect();
 
@@ -296,6 +300,7 @@ pub fn get_outputs<T: RngCore + CryptoRng>(
                 *value,
                 recipient,
                 &RistrettoPrivate::from_random(rng),
+                Default::default(),
                 Default::default(),
             )
             .unwrap()

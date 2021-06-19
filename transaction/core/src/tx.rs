@@ -21,6 +21,7 @@ use crate::{
     encrypted_fog_hint::EncryptedFogHint,
     get_tx_out_shared_secret,
     membership_proofs::Range,
+    memo::{LengthError, MemoPayload},
     onetime_keys::{create_onetime_public_key, create_shared_secret, create_tx_public_key},
     ring_signature::{KeyImage, SignatureRctBulletproofs},
     CompressedCommitment,
@@ -243,9 +244,13 @@ pub struct TxOut {
     #[prost(message, required, tag = "3")]
     pub public_key: CompressedRistrettoPublic,
 
-    /// The encrypted account hint for the account server.
+    /// The encrypted fog hint for the fog server.
     #[prost(message, required, tag = "4")]
     pub e_fog_hint: EncryptedFogHint,
+
+    /// The encrypted memo. This is exactly 34 bytes, or should be empty.
+    #[prost(bytes, tag = "5")]
+    pub e_memo: Vec<u8>,
 }
 
 impl TxOut {
@@ -256,31 +261,57 @@ impl TxOut {
     /// * `recipient` - Recipient's address.
     /// * `tx_private_key` - The transaction's private key
     /// * `hint` - Encrypted Fog hint.
+    /// * `memo` - MemoPayload, to be encrypted
     pub fn new(
         value: u64,
         recipient: &PublicAddress,
         tx_private_key: &RistrettoPrivate,
         hint: EncryptedFogHint,
+        memo: MemoPayload,
     ) -> Result<Self, AmountError> {
         let target_key = create_onetime_public_key(tx_private_key, recipient).into();
         let public_key = create_tx_public_key(tx_private_key, recipient.spend_public_key()).into();
 
-        let amount = {
-            let shared_secret = create_shared_secret(recipient.view_public_key(), tx_private_key);
-            Amount::new(value, &shared_secret)
-        }?;
+        let shared_secret = create_shared_secret(recipient.view_public_key(), tx_private_key);
+
+        let amount = Amount::new(value, &shared_secret)?;
+        let e_memo = memo.encrypt(&shared_secret);
 
         Ok(TxOut {
             amount,
             target_key,
             public_key,
             e_fog_hint: hint,
+            e_memo: e_memo.as_slice().to_vec(),
         })
     }
 
-    /// Blake2B256 hash of his TxOut.
+    /// A merlin-based hash of this TxOut.
     pub fn hash(&self) -> Hash {
         self.digest32::<MerlinTranscript>(b"mobilecoin-txout")
+    }
+
+    /// Try to decrypt the e_memo field, using the TxOut shared secret.
+    ///
+    /// This function is backwards-compatible in the following sense:
+    /// - If self.e_memo is empty (a TxOut from before this field was added), we
+    ///   return MemoPayload corresponding to "unused memo".
+    /// - If self.e_memo is present, we use MemoPayload::try_decrypt. This
+    ///   succeeds unless the e_memo has an invalid length.
+    ///
+    /// This function only returns an error if e_memo has a length other than 0
+    /// or 34.
+    ///
+    /// Note that the results of this function call are unauthenticated.
+    pub fn try_decrypt_memo(
+        &self,
+        tx_out_shared_secret: &RistrettoPublic,
+    ) -> Result<MemoPayload, LengthError> {
+        if self.e_memo.is_empty() {
+            Ok(MemoPayload::default())
+        } else {
+            MemoPayload::try_decrypt(&self.e_memo[..], tx_out_shared_secret)
+        }
     }
 }
 
@@ -474,6 +505,7 @@ mod tests {
     use crate::{
         constants::MINIMUM_FEE,
         encrypted_fog_hint::{EncryptedFogHint, ENCRYPTED_FOG_HINT_LEN},
+        memo::MemoPayload,
         ring_signature::SignatureRctBulletproofs,
         tx::{Tx, TxIn, TxOut, TxPrefix},
         Amount,
@@ -486,7 +518,7 @@ mod tests {
 
     #[test]
     // `serialize_tx` should create a Tx, encode/decode it, and compare
-    fn test_serialize_tx() {
+    fn test_serialize_tx_no_memo() {
         let mut rng: StdRng = SeedableRng::from_seed([1u8; 32]);
         let tx_out = {
             let shared_secret = RistrettoPublic::from_random(&mut rng);
@@ -498,6 +530,68 @@ mod tests {
                 target_key,
                 public_key,
                 e_fog_hint: EncryptedFogHint::from(&[1u8; ENCRYPTED_FOG_HINT_LEN]),
+                e_memo: Default::default(),
+            }
+        };
+
+        // TxOut = decode(encode(TxOut))
+        let mut buf = Vec::new();
+        tx_out.encode(&mut buf).expect("failed to serialize TxOut");
+        assert_eq!(tx_out, TxOut::decode(&buf[..]).unwrap());
+
+        let tx_in = TxIn {
+            ring: vec![tx_out.clone()],
+            proofs: vec![],
+        };
+
+        // TxIn = decode(encode(TxIn))
+        let mut buf = Vec::new();
+        tx_in.encode(&mut buf).expect("failed to serialize TxIn");
+        assert_eq!(tx_in, TxIn::decode(&buf[..]).unwrap());
+
+        let prefix = TxPrefix {
+            inputs: vec![tx_in],
+            outputs: vec![tx_out],
+            fee: MINIMUM_FEE,
+            tombstone_block: 23,
+        };
+
+        let mut buf = Vec::new();
+        prefix
+            .encode(&mut buf)
+            .expect("failed to serialize into slice");
+
+        assert_eq!(prefix, TxPrefix::decode(&buf[..]).unwrap());
+
+        // TODO: use a meaningful signature.
+        let signature = SignatureRctBulletproofs::default();
+
+        let tx = Tx { prefix, signature };
+
+        let mut buf = Vec::new();
+        tx.encode(&mut buf).expect("failed to serialize into slice");
+        let recovered_tx: Tx = Tx::decode(&buf[..]).unwrap();
+        assert_eq!(tx, recovered_tx);
+    }
+
+    #[test]
+    // `serialize_tx` should create a Tx, encode/decode it, and compare
+    fn test_serialize_tx_with_memo() {
+        let mut rng: StdRng = SeedableRng::from_seed([1u8; 32]);
+        let tx_out = {
+            let shared_secret = RistrettoPublic::from_random(&mut rng);
+            let target_key = RistrettoPublic::from_random(&mut rng).into();
+            let public_key = RistrettoPublic::from_random(&mut rng).into();
+            let amount = Amount::new(23u64, &shared_secret).unwrap();
+            TxOut {
+                amount,
+                target_key,
+                public_key,
+                e_fog_hint: EncryptedFogHint::from(&[1u8; ENCRYPTED_FOG_HINT_LEN]),
+                e_memo: MemoPayload::default()
+                    .encrypt(&shared_secret)
+                    .as_slice()
+                    .to_vec(),
             }
         };
 

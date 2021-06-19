@@ -35,6 +35,9 @@ use zeroize::Zeroize;
 /// An account's "default address" is its zero^th subaddress.
 pub const DEFAULT_SUBADDRESS_INDEX: u64 = 0;
 
+/// An account's "change address" is its 1st subaddress.
+pub const CHANGE_SUBADDRESS_INDEX: u64 = 1;
+
 /// A MobileCoin user's public subaddress.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Message, Clone, Digestible)]
 pub struct PublicAddress {
@@ -355,6 +358,12 @@ impl AccountKey {
     #[inline]
     pub fn default_subaddress(&self) -> PublicAddress {
         self.subaddress(DEFAULT_SUBADDRESS_INDEX)
+    }
+
+    /// Get the account's change subaddress.
+    #[inline]
+    pub fn change_subaddress(&self) -> PublicAddress {
+        self.subaddress(CHANGE_SUBADDRESS_INDEX)
     }
 
     /// Get the account's i^th subaddress.

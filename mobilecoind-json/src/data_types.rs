@@ -514,6 +514,7 @@ pub struct JsonTxOut {
     pub target_key: String,
     pub public_key: String,
     pub e_fog_hint: String,
+    pub e_memo: String,
 }
 
 impl From<&mc_api::external::TxOut> for JsonTxOut {
@@ -523,6 +524,7 @@ impl From<&mc_api::external::TxOut> for JsonTxOut {
             target_key: hex::encode(src.get_target_key().get_data()),
             public_key: hex::encode(src.get_public_key().get_data()),
             e_fog_hint: hex::encode(src.get_e_fog_hint().get_data()),
+            e_memo: hex::encode(src.get_e_memo()),
         }
     }
 }
@@ -560,12 +562,15 @@ impl TryFrom<&JsonTxOut> for mc_api::external::TxOut {
             hex::decode(&src.e_fog_hint)
                 .map_err(|err| format!("Failed to decode e_fog_hint hex: {}", err))?,
         );
+        let e_memo = hex::decode(&src.e_memo)
+            .map_err(|err| format!("Failed to decode e_memo hex: {}", err))?;
 
         let mut txo = mc_api::external::TxOut::new();
         txo.set_amount(amount);
         txo.set_target_key(target_key);
         txo.set_public_key(public_key);
         txo.set_e_fog_hint(e_fog_hint);
+        txo.set_e_memo(e_memo);
 
         Ok(txo)
     }
@@ -1329,6 +1334,7 @@ mod test {
                 target_key: RistrettoPublic::from_random(&mut rng).into(),
                 public_key: RistrettoPublic::from_random(&mut rng).into(),
                 e_fog_hint: (&[0u8; ENCRYPTED_FOG_HINT_LEN]).into(),
+                e_memo: vec![0u8; 34],
             };
 
             let subaddress_index = 123;
