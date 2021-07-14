@@ -7,8 +7,10 @@
 //
 // We print them to slog because that is our logging infrastructure
 //
-// Note: This is deprecated and the eprintln should go away, the logger
-// API is what you should use.
+// Note: This should really only be used for local debugging of patches.
+// There is no global logger infrastructure in the enclave, so this eprintln
+// is all you get, especially when printf debugging something near the FFI layer
+// where you are unlikely to have a Logger object available.
 
 use mc_common::logger::global_log;
 use std::str;
