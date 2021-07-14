@@ -471,11 +471,11 @@ derive_prost_message_from_repr_bytes!(TxOutConfirmationNumber);
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::{
         constants::MINIMUM_FEE,
         encrypted_fog_hint::{EncryptedFogHint, ENCRYPTED_FOG_HINT_LEN},
         ring_signature::SignatureRctBulletproofs,
-        tx::{Tx, TxIn, TxOut, TxPrefix},
         Amount,
     };
     use alloc::vec::Vec;
@@ -483,6 +483,97 @@ mod tests {
     use mc_util_from_random::FromRandom;
     use prost::Message;
     use rand::{rngs::StdRng, SeedableRng};
+    use rand_core::{CryptoRng, RngCore};
+
+    /// Creates a vector of TxOuts.
+    ///
+    /// # Arguments
+    /// * `size` - Number of elements in the vector.
+    /// * `rng` - Randomness.
+    ///
+    /// Returns outputs
+    fn get_outputs<RNG: CryptoRng + RngCore>(size: usize, rng: &mut RNG) -> Vec<TxOut> {
+        let mut outs: Vec<TxOut> = Vec::new();
+
+        // Create ring_size - 1 mixins.
+        for _i in 0..size {
+            let shared_secret = RistrettoPublic::from_random(rng);
+            let target_key = RistrettoPublic::from_random(rng).into();
+            let public_key = RistrettoPublic::from_random(rng).into();
+            let amount = Amount::new(23u64, &shared_secret).unwrap();
+            let tx_out = TxOut {
+                amount,
+                target_key,
+                public_key,
+                e_fog_hint: EncryptedFogHint::from(&[1u8; ENCRYPTED_FOG_HINT_LEN]),
+            };
+            outs.push(tx_out);
+        }
+        outs
+    }
+
+    /// Creates a vector of TxOutMembershipElements.
+    ///
+    /// # Arguments
+    /// * `size` - Number of elements in the vector.
+    /// * `rng` - Randomness.
+    ///
+    /// Returns elements
+    fn get_elements<RNG: CryptoRng + RngCore>(
+        size: usize,
+        rng: &mut RNG,
+    ) -> Vec<TxOutMembershipElement> {
+        let mut elements: Vec<TxOutMembershipElement> = Vec::new();
+        for _i in 0..size {
+            let mut membership_hash = [0u8; 32];
+            rng.fill_bytes(&mut membership_hash);
+
+            let range = Range {
+                from: 0,
+                to: rng.next_u64(),
+            };
+
+            let element = TxOutMembershipElement {
+                range,
+                hash: TxOutMembershipHash(membership_hash),
+            };
+            elements.push(element);
+        }
+        elements
+    }
+
+    /// Creates a vector of TxIns.
+    ///
+    /// # Arguments
+    /// * `size` - Number of elements in the vector.
+    /// * `rng` - Randomness.
+    ///
+    /// Returns inputs
+    fn get_inputs<RNG: CryptoRng + RngCore>(
+        size: usize,
+        num_proofs_per_input: usize,
+        rng: &mut RNG,
+    ) -> Vec<TxIn> {
+        let mut inputs: Vec<TxIn> = Vec::new();
+        for _i in 0..size {
+            let ring = get_outputs(11, rng);
+            let proofs: Vec<TxOutMembershipProof> = ring
+                .iter()
+                .map(|_tx_out| {
+                    let elements = get_elements(num_proofs_per_input, rng);
+                    TxOutMembershipProof {
+                        index: 0,
+                        highest_index: 64,
+                        elements,
+                    }
+                })
+                .collect();
+
+            let tx_in = TxIn { ring, proofs };
+            inputs.push(tx_in);
+        }
+        inputs
+    }
 
     #[test]
     // `serialize_tx` should create a Tx, encode/decode it, and compare
@@ -539,5 +630,42 @@ mod tests {
         tx.encode(&mut buf).expect("failed to serialize into slice");
         let recovered_tx: Tx = Tx::decode(&buf[..]).unwrap();
         assert_eq!(tx, recovered_tx);
+    }
+
+    #[test]
+    fn test_tx_prefix_hash() {
+        let mut rng: StdRng = SeedableRng::from_seed([32u8; 32]);
+        let outputs = get_outputs(3, &mut rng);
+
+        let inputs = get_inputs(2, 4, &mut rng);
+        let prefix = TxPrefix::new(inputs.clone(), outputs.clone(), MINIMUM_FEE, 100);
+        let prefix_hash = prefix.hash();
+
+        // Verify that the prefix with the same contents produces the same hash
+        let prefix1 = TxPrefix::new(inputs.clone(), outputs.clone(), MINIMUM_FEE, 100);
+        let prefix_hash1 = prefix1.hash();
+        assert_eq!(prefix_hash, prefix_hash1);
+
+        // Now let's construct a different set of membership elements in the proof with everything else the same
+        let mut inputs2: Vec<TxIn> = Vec::new();
+        for input in inputs {
+            let mut proofs: Vec<TxOutMembershipProof> = Vec::new();
+            for proof in input.proofs {
+                let elements = get_elements(4, &mut rng);
+                proofs.push(TxOutMembershipProof {
+                    index: proof.index,
+                    highest_index: proof.highest_index,
+                    elements,
+                });
+            }
+            inputs2.push(TxIn {
+                ring: input.ring.clone(),
+                proofs,
+            });
+        }
+        let prefix2 = TxPrefix::new(inputs2, outputs, MINIMUM_FEE, 100);
+        let prefix_hash2 = prefix2.hash();
+
+        assert_ne!(prefix_hash, prefix_hash2);
     }
 }
