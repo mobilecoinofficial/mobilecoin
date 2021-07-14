@@ -62,6 +62,7 @@ impl From<TransactionValidationError> for ProposeTxResult {
             TransactionValidationError::TxFeeError => Self::TxFeeError,
             TransactionValidationError::KeyError => Self::KeyError,
             TransactionValidationError::UnsortedInputs => Self::UnsortedInputs,
+            TransactionValidationError::UnsortedOutputs => Self::UnsortedOutputs,
         }
     }
 }
@@ -123,6 +124,7 @@ impl TryInto<TransactionValidationError> for ProposeTxResult {
             Self::TxFeeError => Ok(TransactionValidationError::TxFeeError),
             Self::KeyError => Ok(TransactionValidationError::KeyError),
             Self::UnsortedInputs => Ok(TransactionValidationError::UnsortedInputs),
+            Self::UnsortedOutputs => Ok(TransactionValidationError::UnsortedOutputs),
         }
     }
 }

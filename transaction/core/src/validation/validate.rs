@@ -46,6 +46,8 @@ pub fn validate<R: RngCore + CryptoRng>(
 
     validate_inputs_are_sorted(&tx.prefix)?;
 
+    validate_outputs_are_sorted(&tx.prefix)?;
+
     validate_membership_proofs(&tx.prefix, &root_proofs)?;
 
     validate_signature(&tx, csprng)?;
@@ -169,14 +171,16 @@ fn validate_inputs_are_sorted(tx_prefix: &TxPrefix) -> TransactionValidationResu
     Ok(())
 }
 
-/// All key images within the transaction must be unique.
-fn validate_key_images_are_unique(tx: &Tx) -> TransactionValidationResult<()> {
-    let mut uniques = HashSet::default();
-    for key_image in tx.key_images() {
-        if !uniques.insert(key_image) {
-            return Err(TransactionValidationError::DuplicateKeyImages);
-        }
+/// Transaction outputs must be sorted by public_key, ascending.
+fn validate_outputs_are_sorted(tx_prefix: &TxPrefix) -> TransactionValidationResult<()> {
+    let outputs_are_sorted = tx_prefix
+        .outputs
+        .windows(2)
+        .all(|window| window[0].public_key <= window[1].public_key);
+    if !outputs_are_sorted {
+        return Err(TransactionValidationError::UnsortedOutputs);
     }
+
     Ok(())
 }
 
@@ -190,6 +194,18 @@ fn validate_outputs_public_keys_are_unique(tx: &Tx) -> TransactionValidationResu
     }
     Ok(())
 }
+
+/// All key images within the transaction must be unique.
+fn validate_key_images_are_unique(tx: &Tx) -> TransactionValidationResult<()> {
+    let mut uniques = HashSet::default();
+    for key_image in tx.key_images() {
+        if !uniques.insert(key_image) {
+            return Err(TransactionValidationError::DuplicateKeyImages);
+        }
+    }
+    Ok(())
+}
+
 /// Verifies the transaction signature.
 ///
 /// A valid RctBulletproofs signature implies that:
@@ -386,10 +402,13 @@ mod tests {
                 validate_transaction_fee, MAX_TOMBSTONE_BLOCKS,
             },
         },
+        Amount,
     };
 
     use crate::{
-        membership_proofs::Range, validation::validate::validate_ring_elements_are_sorted,
+        membership_proofs::Range,
+        tx::TxOut,
+        validation::validate::{validate_outputs_are_sorted, validate_ring_elements_are_sorted},
     };
     use mc_crypto_keys::{CompressedRistrettoPublic, ReprBytes};
     use mc_ledger_db::{Ledger, LedgerDB};
@@ -755,6 +774,52 @@ mod tests {
             validate_inputs_are_sorted(&tx_prefix),
             Err(TransactionValidationError::UnsortedInputs)
         );
+    }
+
+    #[test]
+    /// Should reject a transaction with unsorted outputs.
+    fn test_validate_outputs_are_sorted() {
+        let (tx, _ledger) = create_test_tx();
+
+        let output_a = TxOut {
+            amount: Amount::new(1, &Default::default()).unwrap(),
+            target_key: Default::default(),
+            public_key: CompressedRistrettoPublic::from(&[1u8; 32]),
+            e_fog_hint: Default::default(),
+        };
+
+        let output_b = TxOut {
+            amount: Amount::new(1, &Default::default()).unwrap(),
+            target_key: Default::default(),
+            public_key: CompressedRistrettoPublic::from(&[2u8; 32]),
+            e_fog_hint: Default::default(),
+        };
+
+        assert!(output_a.public_key < output_b.public_key);
+
+        {
+            let mut tx_prefix = tx.prefix.clone();
+            // A single output is trivially sorted.
+            tx_prefix.outputs = vec![output_a.clone()];
+            assert_eq!(validate_outputs_are_sorted(&tx_prefix), Ok(()));
+        }
+
+        {
+            let mut tx_prefix = tx.prefix.clone();
+            // Outputs sorted by public_key, ascending.
+            tx_prefix.outputs = vec![output_a.clone(), output_b.clone()];
+            assert_eq!(validate_outputs_are_sorted(&tx_prefix), Ok(()));
+        }
+
+        {
+            let mut tx_prefix = tx.prefix.clone();
+            // Outputs are not correctly sorted.
+            tx_prefix.outputs = vec![output_b.clone(), output_a.clone()];
+            assert_eq!(
+                validate_outputs_are_sorted(&tx_prefix),
+                Err(TransactionValidationError::UnsortedOutputs)
+            );
+        }
     }
 
     #[test]

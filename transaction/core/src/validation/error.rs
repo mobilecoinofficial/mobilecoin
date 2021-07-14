@@ -78,6 +78,9 @@ pub enum TransactionValidationError {
      */
     UnsortedInputs,
 
+    /// Outputs must be sorted by public_key, ascending.
+    UnsortedOutputs,
+
     /// Key Images must be sorted.
     UnsortedKeyImages,
 

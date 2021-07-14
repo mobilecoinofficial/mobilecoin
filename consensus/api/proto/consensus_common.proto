@@ -71,6 +71,7 @@ enum ProposeTxResult {
     TxFeeError = 37;
     KeyError = 38;
     UnsortedInputs = 39;
+    UnsortedOutputs = 40;
 }
 
 /// Response from TxPropose RPC call.
