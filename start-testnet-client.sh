@@ -48,8 +48,8 @@ if ps -p $pid > /dev/null; then
     echo "Sleeping 5s to allow mobilecoind to sync the ledger"
     sleep 5
 
-    echo "Starting local mc-mobilecoind-json."
-    ${TARGETDIR}/mc-mobilecoind-json
+    echo "Starting local mobilecoind-json."
+    ${TARGETDIR}/mobilecoind-json
 else
     echo "Starting mobilecoind failed. Please check logs at $(pwd)/mobilecoind.log."
 fi
