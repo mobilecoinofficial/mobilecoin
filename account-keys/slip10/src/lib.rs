@@ -3,6 +3,8 @@
 #![no_std]
 #![warn(missing_docs)]
 #![deny(unsafe_code)]
+#![feature(external_doc)]
+#![doc(include = "../README.md")]
 
 extern crate alloc;
 

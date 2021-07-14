@@ -1,13 +1,10 @@
 // Copyright 2018-2021 The MobileCoin Foundation
 
-//! This module provide an implementation of the verifier for the x509 utils
-//! "PublicKeyType" enum.
-//!
-//! Only Ed25519 is currently supported.
-
 #![no_std]
 #![warn(missing_docs)]
 #![warn(unsafe_code)]
+#![feature(external_doc)]
+#![doc(include = "../README.md")]
 
 mod ed25519;
 

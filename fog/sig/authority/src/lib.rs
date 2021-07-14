@@ -1,12 +1,10 @@
 // Copyright 2018-2021 The MobileCoin Foundation
 
-//! This module contains the traits for creating and verifying signatures over
-//! fog authority public keys and the canonical signing context/domain separator
-//! byte string.
-
 #![no_std]
 #![warn(missing_docs)]
 #![warn(unsafe_code)]
+#![feature(external_doc)]
+#![doc(include = "../README.md")]
 
 extern crate alloc;
 

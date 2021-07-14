@@ -4,7 +4,7 @@ version = "1.1.0"
 authors = ["MobileCoin"]
 edition = "2018"
 readme = "README.md"
-description = "MobileCoin BIP-39 Key Derivation"
+description = "MobileCoin Key Derivation"
 license = "GPL-3.0"
 
 [dependencies]
