@@ -12,11 +12,18 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
 source "$HOME/.cargo/env"
 
-pushd "$(dirname "$0")"
+pushd "$(dirname "$0")" >/dev/null
+
+if ! command -v jq >/dev/null 2>&1 ; then
+    ERRNO="$?"
+    printf "ERROR: This script requires jq, a commandline JSON parser and transformer.\n"
+    printf "       Please install jq in your distro's recommended manner.\n"
+    exit $ERRNO
+fi
 
 echo "Pulling down TestNet consensus validator signature material"
 
-SIGSTRUCT_URI=$(curl -s https://enclave-distribution.test.mobilecoin.com/production.json | grep sigstruct | awk '{print $2}' | tr -d \")
+SIGSTRUCT_URI=$(curl -s https://enclave-distribution.test.mobilecoin.com/production.json | jq -r '.consensus | .sigstruct')
 curl -O https://enclave-distribution.test.mobilecoin.com/${SIGSTRUCT_URI}
 
 TARGETDIR=./target/release
