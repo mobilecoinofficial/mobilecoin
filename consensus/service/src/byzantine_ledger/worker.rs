@@ -1251,6 +1251,68 @@ mod tests {
         assert_eq!(worker.pending_consensus_msgs.len(), 1);
     }
 
+    /// Should maintain the invariant that pending_values and pending_values map only contain
+    /// tx_hashes corresponding to transactions that are valid w.r.t the current ledger.
+    #[test_with_logger]
+    fn receive_tasks_omits_expired_transactions(logger: Logger) {
+        let (node_id, _local_node_uri, msg_signer_key) = get_local_node_config(11);
+        let mut rng: StdRng = SeedableRng::from_seed([97u8; 32]);
+        let peers = get_peers(&[22, 33], &mut rng);
+        let quorum_set =
+            QuorumSet::new_with_node_ids(2, vec![peers[0].id.clone(), peers[1].id.clone()]);
+
+        let num_blocks = 12;
+        let (scp_node, ledger, ledger_sync, mut tx_manager, broadcast) =
+            get_mocks(&node_id, &quorum_set, num_blocks);
+
+        let connection_manager = get_connection_manager(&node_id, &peers, &logger);
+        let (task_sender, task_receiver) = get_channel();
+
+        // Transaction hashes that will be submitted by clients.
+        let tx_hashes: Vec<_> = (0..10).map(|i| TxHash([i as u8; 32])).collect();
+
+        // Configure mock TxManager. All transactions have expired.
+        for tx_hash in &tx_hashes {
+            tx_manager
+                .expect_validate()
+                .with(eq(tx_hash.clone()))
+                .return_const(Err(TxManagerError::TransactionValidation(
+                    TransactionValidationError::TombstoneBlockExceeded,
+                )));
+        }
+
+        let mut worker = ByzantineLedgerWorker::new(
+            Box::new(scp_node),
+            msg_signer_key,
+            ledger,
+            ledger_sync,
+            connection_manager,
+            Arc::new(tx_manager),
+            Arc::new(Mutex::new(broadcast)),
+            task_receiver,
+            Arc::new(AtomicBool::new(false)),
+            Arc::new(AtomicU64::new(0)),
+            Arc::new(Mutex::new(Option::<ConsensusMsg>::None)),
+            logger,
+        );
+
+        // Initially, pending_values should be empty.
+        assert_eq!(worker.pending_values, vec![]);
+
+        // Submit the transactions.
+        for tx_hash in &tx_hashes {
+            task_sender
+                .send(TaskMessage::Values(Some(Instant::now()), vec![*tx_hash]))
+                .unwrap();
+        }
+
+        assert_eq!(worker.receive_tasks(), true);
+        // Should maintain the invariant that pending_values and pending_values map
+        // only contain tx_hashes corresponding to transactions that are valid w.r.t the current ledger.
+        assert_eq!(worker.pending_values.len(), 0);
+        assert_eq!(worker.pending_values_map.len(), 0);
+    }
+
     /// Constructs a VerifiedConsensusMsg.
     ///
     /// # Arguments
