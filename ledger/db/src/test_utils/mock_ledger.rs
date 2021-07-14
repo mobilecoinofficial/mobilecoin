@@ -186,6 +186,13 @@ impl Ledger for MockLedger {
             })
             .collect()
     }
+
+    fn get_tx_outs_and_proofs_of_membership(
+        &self,
+        _indices: &[u64],
+    ) -> Result<Vec<Option<(TxOut, TxOutMembershipProof)>>, Error> {
+        unimplemented!()
+    }
 }
 
 #[allow(dead_code)]

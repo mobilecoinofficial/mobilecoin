@@ -60,6 +60,13 @@ pub trait Ledger: Send {
         indexes: &[u64],
     ) -> Result<Vec<TxOutMembershipProof>, Error>;
 
+    /// Gets tx outs and proof of memberships for TxOuts with indexes `indices`.
+    /// Returns None for those indices which are out-of-bounds.
+    fn get_tx_outs_and_proofs_of_membership(
+        &self,
+        indices: &[u64],
+    ) -> Result<Vec<Option<(TxOut, TxOutMembershipProof)>>, Error>;
+
     /// Returns true if the Ledger contains the given TxOut public key.
     fn contains_tx_out_public_key(
         &self,

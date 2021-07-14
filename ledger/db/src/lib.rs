@@ -323,6 +323,38 @@ impl Ledger for LedgerDB {
             })
             .collect()
     }
+
+    /// Gets a proof of memberships for TxOuts with indices `indices`.
+    fn get_tx_outs_and_proofs_of_membership(
+        &self,
+        indices: &[u64],
+    ) -> Result<Vec<Option<(TxOut, TxOutMembershipProof)>>, Error> {
+        let db_transaction = self.env.begin_ro_txn()?;
+        indices
+            .iter()
+            .map(
+                |index| -> Result<Option<(TxOut, TxOutMembershipProof)>, Error> {
+                    match self
+                        .tx_out_store
+                        .get_tx_out_by_index(*index, &db_transaction)
+                    {
+                        Err(Error::NotFound) => Ok(None),
+                        Err(err) => Err(err),
+                        Ok(tx_out) => {
+                            match self
+                                .tx_out_store
+                                .get_merkle_proof_of_membership(*index, &db_transaction)
+                            {
+                                Err(Error::NotFound) => Ok(None),
+                                Err(err) => Err(err),
+                                Ok(proof) => Ok(Some((tx_out, proof))),
+                            }
+                        }
+                    }
+                },
+            )
+            .collect()
+    }
 }
 
 impl LedgerDB {
