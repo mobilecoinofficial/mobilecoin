@@ -187,7 +187,7 @@ pub fn get_add_mac_txt_offset(sealed_data: &[u8]) -> Result<u32, ParseSealedErro
     Ok(result)
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Fail)]
+#[derive(Debug, Clone, Eq, PartialEq, Fail, Serialize, Deserialize)]
 pub enum ParseSealedError {
     /// The bytes were too short to contain a sgx_sealed_data_t header
     #[fail(
