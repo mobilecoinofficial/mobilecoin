@@ -1101,6 +1101,7 @@ impl<V: Value, ValidationError: Display> Slot<V, ValidationError> {
                 unblocking_counter
             );
             self.B.N = unblocking_counter;
+            self.maybe_set_ballot_timer();
             self.do_commit_phase();
         }
 
@@ -1211,7 +1212,15 @@ impl<V: Value, ValidationError: Display> Slot<V, ValidationError> {
         // "If any ballot has been confirmed prepared, then "ballot.value" is taken to
         // to be "h.value" for the highest confirmed prepared ballot "h"."
         if let Some(h) = self.ballots_confirmed_prepared().into_iter().max() {
+            if let Some(h_old) = &self.H {
+                if h_old > h {
+                    return Some(h_old.X);
+                }
+            }
             return Some(h.X);
+        }
+        else if let Some(h_old) = &self.H {
+            return Some(h_old.X);
         }
 
         // "Otherwise (if no such "h" exists), if one or more values are confirmed
@@ -1231,7 +1240,15 @@ impl<V: Value, ValidationError: Display> Slot<V, ValidationError> {
         // "ballot.value" is the value of the highest such accepted prepared
         // ballot."
         if let Some(p) = self.ballots_accepted_prepared().into_iter().max() {
+            if let Some(p_old) = &self.P {
+                if p_old > p {
+                    return Some(p_old.X);
+                }
+            }
             return Some(p.X);
+        }
+        else if let Some(p_old) = &self.P {
+            return Some(p_old.X);
         }
 
         // Otherwise, values are unchanged.
