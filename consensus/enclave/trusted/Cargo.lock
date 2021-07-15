@@ -308,7 +308,7 @@ dependencies = [
 [[package]]
 name = "cpufeatures"
 version = "0.1.5"
-source = "git+https://github.com/mobilecoinfoundation/RustCrypto-utils.git?rev=ca38e8d057961aaf0bcf67be3d0cc7642d0551dc#ca38e8d057961aaf0bcf67be3d0cc7642d0551dc"
+source = "git+https://github.com/mobilecoinfoundation/RustCrypto-utils.git?rev=9a22d2a3e5b829277cc05f4833751dd86c155218#9a22d2a3e5b829277cc05f4833751dd86c155218"
 dependencies = [
  "libc",
 ]
@@ -841,7 +841,6 @@ name = "mc-consensus-enclave-trusted"
 version = "1.1.0"
 dependencies = [
  "cargo-emit",
- "cpufeatures",
  "lazy_static",
  "mbedtls",
  "mbedtls-sys-auto",

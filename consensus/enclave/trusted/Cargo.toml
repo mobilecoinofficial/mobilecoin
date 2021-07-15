@@ -39,7 +39,6 @@ mbedtls = { version = "0.8.1", default-features = false, features = ["no_std_dep
 mbedtls-sys-auto = { version = "2.26.1", default-features = false, features = ["custom_threading"] }
 
 # We include these here so we can select in-the-enclave features
-cpufeatures = { version = "0.1.5", features = ["compile-only"] }
 lazy_static = { version = "1.4", features = ["spin_no_std"] }
 sha2 = { version = "0.9.5", default-features = false }
 
@@ -75,7 +74,7 @@ serde_cbor = { git = "https://github.com/mobilecoinofficial/cbor", rev = "4c886a
 bulletproofs = { git = "https://github.com/eranrund/bulletproofs", rev = "8a7c9cdd1efafa3ad68cd65676302f925de68373" }
 
 # Patched to disable the cpuid instruction because that is incompatible with our sgx builds.
-cpufeatures = { git = "https://github.com/mobilecoinfoundation/RustCrypto-utils.git", rev = "ca38e8d057961aaf0bcf67be3d0cc7642d0551dc" }
+cpufeatures = { git = "https://github.com/mobilecoinfoundation/RustCrypto-utils.git", rev = "9a22d2a3e5b829277cc05f4833751dd86c155218" }
 
 # ed25519-dalek depends on rand 0.7 which in turns depends on a broken version of packed_simd
 # This is a PR that moves it to newer rand
